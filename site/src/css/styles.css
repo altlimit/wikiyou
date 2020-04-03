@@ -1,0 +1,25 @@
+.error-text {
+    font-size: 130px;
+}
+
+@media (min-width: 768px) {
+    .error-text {
+        font-size: 220px;
+    }
+}
+
+.h-without-header {
+    height: calc(100vh - 9rem);
+}
+
+.h-1\/4 {
+    height: 25%;
+}
+
+.h-2\/4 {
+    height: 50%;
+}
+
+.h-3\/4 {
+    height: 75%;
+}
