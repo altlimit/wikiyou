@@ -5,7 +5,7 @@ title: Simple File Sharing
 
 {{define "addHead"}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.2.0/peerjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
 <script>
     (function (d) {
         if (d.currentScript) {
@@ -39,13 +39,6 @@ title: Simple File Sharing
             error: null,
             isOwner: false,
             downloads: {},
-            createQrCode: function (text) {
-                qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
-                var qr = qrcode(4, "M");
-                qr.addData(text, "Byte");
-                qr.make();
-                return qr.createImgTag();
-            },
             qs: function () {
                 var a = window.location.search.substr(1).split('&');
                 if (a == "") return {};
@@ -108,6 +101,9 @@ title: Simple File Sharing
             uid: function () {
                 return Math.random().toString(36).substr(2, 9);
             },
+            uuid: function () {
+                return this.uid() + "-" + this.uid();
+            },
             receive: function (r) {
                 switch (r.action) {
                     case "peers":
@@ -149,7 +145,6 @@ title: Simple File Sharing
                                         };
                                         if (done) {
                                             data.done = true;
-                                            console.log(data);
                                         }
                                         started = true;
                                         this.peers[r.data.peerId].send({
@@ -201,7 +196,12 @@ title: Simple File Sharing
                 return Object.keys(this.peers);
             },
             init: function () {
-                this.peer = new Peer();
+                var peerId = sessionStorage.getItem("peerId");
+                if (!peerId) {
+                    peerId = this.uuid();
+                    sessionStorage.setItem("peerId", peerId);
+                }
+                this.peer = new Peer(peerId);
                 this.peer.on('open', function (id) {
                     if (this.peer.id === null) {
                         this.peer.id = this.lastPeerId;
@@ -216,7 +216,11 @@ title: Simple File Sharing
                         this.ready = true;
                     }
                     this.shareUrl = location.href + "?id=" + (toId ? toId : this.peer.id);
-                    this.$refs.qrcode.innerHTML = this.createQrCode(this.shareUrl);
+                    new QRCode(this.$refs.qrcode, {
+                        text: this.shareUrl,
+                        width: 128,
+                        height: 128
+                    });
                 }.bind(this));
 
                 this.peer.on('connection', function (conn) {
@@ -278,7 +282,6 @@ title: Simple File Sharing
                     this.receive(data);
                 }.bind(this));
                 conn.on('close', function () {
-                    console.log("Closed");
                     delete this.peers[conn.peer];
                     delete this.otherFiles[conn.peer];
                 }.bind(this));
@@ -361,6 +364,10 @@ title: Simple File Sharing
                     return Math.floor(this.chunks[tid].progress / Number(this.chunks[tid].size) * 100);
                 }
                 return 0;
+            },
+            changePeerId() {
+                sessionStorage.removeItem("peerId");
+                location.href = location.origin + location.pathname;
             }
         };
     }
@@ -380,15 +387,15 @@ title: Simple File Sharing
         </form>
         <div class="m-4">
             <label class="inline-block text-sm">Share URL:</label>
-            <input type="text" x-ref="share" x-model="shareUrl" class="border shadow w-64">
+            <input type="text" x-ref="share" x-model="shareUrl" class="border shadow w-64 mb-2">
             <button x-on:click="copyUrl"
-                class="inline-block text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
+                class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
                 Copy Url
             </button>
-            <a href="?"
-                class="inline-block text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
+            <button x-on:click="changePeerId"
+                class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
                 New Share
-            </a>
+            </button>
             <div x-ref="qrcode" class="flex justify-center"></div>
         </div>
         <p class="p-4 text-gray-500" x-text="ready ? '' : 'Connecting...'"></p>
