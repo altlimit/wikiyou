@@ -1,0 +1,30 @@
+{{define "footer"}}
+{{$icons := data "icons.json"}}
+<div class="mt-8">
+    <div class="container mx-auto px-8">
+        <div class="px-10">
+            <div class="flex items-center justify-between border-t py-8">
+                <div class="justify-start text-xs w-3/5 flex">
+                    <div class="mr-4">
+                        &copy; 2020 WikiYou.org
+                    </div>
+                </div>
+                <div class="justify-center w-1/5 text-center">
+
+                </div>
+                <div class="justify-end text-xs w-2/5 flex text-right">
+                    <div class="ml-4">
+                        <a href="https://github.com/altlimit/wikiyou">
+                            <svg class="fill-current text-gray-700 h-6 w-6 inline-block" role="img" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="{{$icons.github}}" />
+                            </svg>
+                            Contribute
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

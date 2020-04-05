@@ -1,0 +1,26 @@
+{{define "nav"}}
+
+<div class="bg-gray-600 mb-6">
+    <div class="container mx-auto px-8">
+        <div class="flex items-center py-2 px-10">
+            <div class="w-3/4 flex items-center">
+                <div>
+                    <a href="/" class="h-8 w-8 fill-current text-white text-lg">
+                        WikiYou.org
+                    </a>
+                </div>
+
+                <div class="ml-4">
+                    <div class="text-sm flex items-center w-64">
+                        <div>
+                            <a href="{{.Path}}" class="no-underline text-gray-200 pr-3">
+                                {{.title}}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
