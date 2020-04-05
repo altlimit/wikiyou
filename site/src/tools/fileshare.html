@@ -388,17 +388,19 @@ title: Simple File Sharing
 
         <div class="min-w-full bg-white mt-4" x-show="allFiles().length > 0">
             <template x-for="(file, index) in allFiles()" :key="index">
-                <div class="border">
-                    <div class="inline-block text-left py-3 px-4" x-on:click="download(file)"
-                        x-bind:class="{'underline cursor-pointer': downloadProgress(file) == 0 && file.owner != peer.id}"
-                        x-text="file.name"></div>
-                    <div class="inline-block text-left py-3 px-4" x-text="file.type"></div>
-                    <div class="inline-block text-left py-3 px-4" x-text="file.owner"></div>
-                    <div class="inline-block text-left py-3 px-4" x-text="file.size"></div>
-                    <div class="inline-block text-left py-3 px-4">
+                <div class="border flex flex-wrap">
+                    <div class="flex-1 text-left py-3 px-4" x-on:click="download(file)" x-text="file.name"></div>
+                    <div class="flex-1 text-left py-3 px-4" x-text="file.type"></div>
+                    <div class="flex-1 text-left py-3 px-4" x-text="file.owner"></div>
+                    <div class="flex-1 text-left py-3 px-4" x-text="file.size"></div>
+                    <div class="flex-1 text-left py-3 px-4">
                         <button
-                            class="inline-block text-sm border px-2 py-1 bg-red-400 rounded w-auto hover:bg-red-500 cursor-pointer"
+                            class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-red-400 rounded w-auto hover:bg-red-500"
                             x-on:click="remove(index)" x-show="file.owner == peer.id">Stop Sharing</button>
+                        <button
+                            class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500"
+                            x-on:click="download(file)"
+                            x-show="downloadProgress(file) == 0 && file.owner != peer.id">Download</button>
                     </div>
                     <div class="shadow w-full bg-grey-light mt-2 w-full" x-show="downloadProgress(file) > 0">
                         <div class="bg-teal-500 h-1" x-bind:style="'width: '+downloadProgress(file)+'%'"></div>
