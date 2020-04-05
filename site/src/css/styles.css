@@ -23,3 +23,7 @@
 .h-3\/4 {
     height: 75%;
 }
+
+[x-cloak] {
+    display: none;
+}

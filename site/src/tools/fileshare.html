@@ -273,7 +273,6 @@ title: Simple File Sharing
                 var conn = this.peer.connect(peerId, {
                     reliable: true
                 });
-                console.log("Connect", conn);
                 conn.on('open', function () {
                     this.ready = true;
                     this.peers[peerId] = conn;
@@ -377,15 +376,9 @@ title: Simple File Sharing
 <div class="px-3 py-6">
     <div id="drop-area" class="bg-white border-dashed border-4 px-2 py-4 text-center" x-data="share()" x-init="init"
         x-ref="dropArea">
-        <form>
-            <p class="p-2">Drop files you want to share or click button below to browse.</p>
-            <input type="file" id="file" class="hidden" multiple accept="*/*" x-on:change="handleFiles">
-            <label
-                class="inline-block text-lg border px-4 py-2 bg-teal-400 rounded w-full lg:w-auto hover:bg-teal-500 cursor-pointer"
-                for="file">Share
-                File(s)</label>
-        </form>
-        <div class="m-4">
+        <p class="py-1 text-gray-500" x-text="ready ? 'ID: ' + peer.id : 'Connecting...'"></p>
+        <div class="m-4" v-show="ready" x-show="ready">
+            <p class="p-2">Share the url or let them scan QR code to anyone you want to share files with.</p>
             <label class="inline-block text-sm">Share URL:</label>
             <input type="text" x-ref="share" x-model="shareUrl" class="border shadow w-64 mb-2">
             <button x-on:click="copyUrl"
@@ -398,10 +391,23 @@ title: Simple File Sharing
             </button>
             <div x-ref="qrcode" class="flex justify-center"></div>
         </div>
-        <p class="p-4 text-gray-500" x-text="ready ? '' : 'Connecting...'"></p>
+        <form x-show="ready" x-cloak>
+            <p class="p-2">Drop files you want to share or click button below to browse.</p>
+            <p class="p-2 text-sm text-gray-500">
+                This software does not upload anything you share to any server. You only use bandwidth when somebody
+                else tries to download your file. If you have any feature suggestions or want to do it yourself, please
+                go to github project by clicking the contribute link below and create an issue or pull request.
+            </p>
+            <input type="file" id="file" class="hidden" multiple accept="*/*" x-on:change="handleFiles">
+            <label
+                class="inline-block text-lg border px-4 py-2 bg-teal-400 rounded w-full lg:w-auto hover:bg-teal-500 cursor-pointer"
+                for="file">Share File(s)</label>
+        </form>
         <p class="p-4 text-red-500" x-text="error" x-show="error"></p>
-        <p class="text-sm text-gray-700">Connected Clients:</p>
-        <p x-text="peerIds()"></p>
+        <template x-if="peerIds().length > 0">
+            <p class="text-sm text-gray-700">Connected Clients:</p>
+            <p x-text="peerIds()"></p>
+        </template>
 
         <div class="min-w-full bg-white mt-4" x-show="allFiles().length > 0">
             <template x-for="(file, index) in allFiles()" :key="index">
