@@ -5,6 +5,7 @@ title: Simple File Sharing
 
 {{define "addHead"}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.2.0/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
     (function (d) {
         if (d.currentScript) {
@@ -38,6 +39,13 @@ title: Simple File Sharing
             error: null,
             isOwner: false,
             downloads: {},
+            createQrCode: function (text) {
+                qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+                var qr = qrcode(4, "M");
+                qr.addData(text, "Byte");
+                qr.make();
+                return qr.createImgTag();
+            },
             qs: function () {
                 var a = window.location.search.substr(1).split('&');
                 if (a == "") return {};
@@ -208,6 +216,7 @@ title: Simple File Sharing
                         this.ready = true;
                     }
                     this.shareUrl = location.href + "?id=" + (toId ? toId : this.peer.id);
+                    this.$refs.qrcode.innerHTML = this.createQrCode(this.shareUrl);
                 }.bind(this));
 
                 this.peer.on('connection', function (conn) {
@@ -380,6 +389,7 @@ title: Simple File Sharing
                 class="inline-block text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
                 New Share
             </a>
+            <div x-ref="qrcode" class="flex justify-center"></div>
         </div>
         <p class="p-4 text-gray-500" x-text="ready ? '' : 'Connecting...'"></p>
         <p class="p-4 text-red-500" x-text="error" x-show="error"></p>
