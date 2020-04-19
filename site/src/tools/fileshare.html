@@ -6,25 +6,12 @@ title: Simple File Sharing
 {{define "addHead"}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.2.0/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+{{template "alpinejs" .}}
 <script>
-    (function (d) {
-        if (d.currentScript) {
-            const s = d.createElement("script");
-            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
-            s.defer = true;
-            d.head.appendChild(s);
-        } else {
-            var s = d.createElement("script");
-            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine-ie11.min.js";
-            d.head.appendChild(s);
-        }
+    window.onbeforeunload = function () {
+        return "Are you sure you want to leave?";
+    }
 
-        window.onbeforeunload = function () {
-            return "Are you sure you want to leave?";
-        }
-    })(document);
-</script>
-<script>
     function share() {
         return {
             peer: null,
@@ -373,64 +360,62 @@ title: Simple File Sharing
 </script>
 {{end}}
 {{define "content"}}
-<div class="px-3 py-6">
-    <div id="drop-area" class="bg-white border-dashed border-4 px-2 py-4 text-center" x-data="share()" x-init="init"
-        x-ref="dropArea">
-        <p class="py-1 text-gray-500" x-text="ready ? 'ID: ' + peer.id : 'Connecting...'"></p>
-        <div class="m-4" v-show="ready" x-show="ready">
-            <p class="p-2">Share the url or let them scan QR code to anyone you want to share files with.</p>
-            <label class="inline-block text-sm">Share URL:</label>
-            <input type="text" x-ref="share" x-model="shareUrl" class="border shadow w-64 mb-2">
-            <button x-on:click="copyUrl"
-                class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
-                Copy Url
-            </button>
-            <button x-on:click="changePeerId"
-                class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
-                New Share
-            </button>
-            <div x-ref="qrcode" class="flex justify-center"></div>
-        </div>
-        <form x-show="ready" x-cloak>
-            <p class="p-2">Drop files you want to share or click button below to browse.</p>
-            <p class="p-2 text-sm text-gray-500">
-                This software does not upload anything you share to any server. You only use bandwidth when somebody
-                else tries to download your file. If you have any feature suggestions or want to do it yourself, please
-                go to github project by clicking the contribute link below and create an issue or pull request.
-            </p>
-            <input type="file" id="file" class="hidden" multiple accept="*/*" x-on:change="handleFiles">
-            <label
-                class="inline-block text-lg border px-4 py-2 bg-teal-400 rounded w-full lg:w-auto hover:bg-teal-500 cursor-pointer"
-                for="file">Share File(s)</label>
-        </form>
-        <p class="p-4 text-red-500" x-text="error" x-show="error"></p>
-        <template x-if="peerIds().length > 0">
-            <p class="text-sm text-gray-700">Connected Clients:</p>
-            <p x-text="peerIds()"></p>
-        </template>
+<div id="drop-area" class="bg-white border-dashed border-4 px-2 py-4 text-center" x-data="share()" x-init="init"
+    x-ref="dropArea">
+    <p class="py-1 text-gray-500" x-text="ready ? 'ID: ' + peer.id : 'Connecting...'"></p>
+    <div class="m-4" v-show="ready" x-show="ready">
+        <p class="p-2">Share the url or let them scan QR code to anyone you want to share files with.</p>
+        <label class="inline-block text-sm">Share URL:</label>
+        <input type="text" x-ref="share" x-model="shareUrl" class="border shadow w-64 mb-2">
+        <button x-on:click="copyUrl"
+            class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
+            Copy Url
+        </button>
+        <button x-on:click="changePeerId"
+            class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
+            New Share
+        </button>
+        <div x-ref="qrcode" class="flex justify-center"></div>
+    </div>
+    <form x-show="ready" x-cloak>
+        <p class="p-2">Drop files you want to share or click button below to browse.</p>
+        <p class="p-2 text-sm text-gray-500">
+            This software does not upload anything you share to any server. You only use bandwidth when somebody
+            else tries to download your file. If you have any feature suggestions or want to do it yourself, please
+            go to github project by clicking the contribute link below and create an issue or pull request.
+        </p>
+        <input type="file" id="file" class="hidden" multiple accept="*/*" x-on:change="handleFiles">
+        <label
+            class="inline-block text-lg border px-4 py-2 bg-teal-400 rounded w-full lg:w-auto hover:bg-teal-500 cursor-pointer"
+            for="file">Share File(s)</label>
+    </form>
+    <p class="p-4 text-red-500" x-text="error" x-show="error"></p>
+    <template x-if="peerIds().length > 0">
+        <p class="text-sm text-gray-700">Connected Clients:</p>
+        <p x-text="peerIds()"></p>
+    </template>
 
-        <div class="min-w-full bg-white mt-4" x-show="allFiles().length > 0">
-            <template x-for="(file, index) in allFiles()" :key="index">
-                <div class="border flex flex-wrap">
-                    <div class="flex-1 text-left py-3 px-4" x-on:click="download(file)" x-text="file.name"></div>
-                    <div class="flex-1 text-left py-3 px-4" x-text="file.type"></div>
-                    <div class="flex-1 text-left py-3 px-4" x-text="file.owner"></div>
-                    <div class="flex-1 text-left py-3 px-4" x-text="file.size"></div>
-                    <div class="flex-1 text-left py-3 px-4">
-                        <button
-                            class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-red-400 rounded w-auto hover:bg-red-500"
-                            x-on:click="remove(index)" x-show="file.owner == peer.id">Stop Sharing</button>
-                        <button
-                            class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500"
-                            x-on:click="download(file)"
-                            x-show="downloadProgress(file) == 0 && file.owner != peer.id">Download</button>
-                    </div>
-                    <div class="shadow w-full bg-grey-light mt-2 w-full" x-show="downloadProgress(file) > 0">
-                        <div class="bg-teal-500 h-1" x-bind:style="'width: '+downloadProgress(file)+'%'"></div>
-                    </div>
+    <div class="min-w-full bg-white mt-4" x-show="allFiles().length > 0">
+        <template x-for="(file, index) in allFiles()" :key="index">
+            <div class="border flex flex-wrap">
+                <div class="flex-1 text-left py-3 px-4" x-on:click="download(file)" x-text="file.name"></div>
+                <div class="flex-1 text-left py-3 px-4" x-text="file.type"></div>
+                <div class="flex-1 text-left py-3 px-4" x-text="file.owner"></div>
+                <div class="flex-1 text-left py-3 px-4" x-text="file.size"></div>
+                <div class="flex-1 text-left py-3 px-4">
+                    <button
+                        class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-red-400 rounded w-auto hover:bg-red-500"
+                        x-on:click="remove(index)" x-show="file.owner == peer.id">Stop Sharing</button>
+                    <button
+                        class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500"
+                        x-on:click="download(file)"
+                        x-show="downloadProgress(file) == 0 && file.owner != peer.id">Download</button>
                 </div>
-            </template>
-        </div>
+                <div class="shadow w-full bg-grey-light mt-2 w-full" x-show="downloadProgress(file) > 0">
+                    <div class="bg-teal-500 h-1" x-bind:style="'width: '+downloadProgress(file)+'%'"></div>
+                </div>
+            </div>
+        </template>
     </div>
 </div>
 {{end}}

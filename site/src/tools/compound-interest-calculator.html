@@ -1,0 +1,74 @@
+---
+template: main.html
+title: Compound Interest Calculator
+---
+
+{{define "addHead"}}
+{{template "alpinejs" .}}
+<script>
+    function calculator() {
+        return {
+            princial: 0,
+            monthly: 250,
+            years: 30,
+            rate: 8,
+            total: function () {
+                const n = 12;
+                const r = Number(this.rate) / 100;
+                const rn = r / n;
+                const pow = n * Number(this.years);
+                const multi = Math.pow(1 + rn, pow);
+                const month = Number(this.monthly) * (multi - 1) / rn;
+                const amount = ((this.princial * multi) + month).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return "Future Amount: " + amount;
+            }
+        }
+    }
+</script>
+{{end}}
+{{define "content"}}
+<div class="flex flex-row flex-wrap">
+    <form x-data="calculator()" class="md:w-1/2-screen m-0 p-5 bg-white w-full tw-h-full shadow md:rounded-sm">
+        <div class="text-2xl text-indigo-900">Calculator <small class="pl-2 text-gray-500">Enter Details</small>
+        </div>
+
+        <div class="flex-col flex py-3">
+            <label class="pb-2 text-gray-700 font-semibold">Start Amount</label>
+            <input type="text" class="p-2 shadow rounded-sm bg-gray-100 outline-none focus:bg-gray-200"
+                x-model="princial">
+        </div>
+
+        <div class="flex-col flex py-3">
+            <label class="pb-2 text-gray-700 font-semibold">Monthly Addition </label>
+            <input type="text" class="p-2 shadow rounded-sm bg-gray-100 outline-none focus:bg-gray-200"
+                x-model="monthly">
+        </div>
+
+        <div class="flex-col flex py-3">
+            <label class="pb-2 text-gray-700 font-semibold">How Many Years</label>
+            <input type="text" class="p-2 shadow rounded-sm bg-gray-100 outline-none focus:bg-gray-200" x-model="years">
+        </div>
+
+        <div class="flex-col flex py-3">
+            <label class="pb-2 text-gray-700 font-semibold">Interest Rate (%)</label>
+            <input type="text" class="p-2 shadow rounded-sm bg-gray-100 outline-none focus:bg-gray-200" x-model="rate">
+        </div>
+
+        <div class="flex-col flex py-3">
+            <div class="mt-5 p-3 bg-gray-400" x-text="total()"></div>
+        </div>
+
+        <p class="my-2 text-sm text-gray-700">
+            Compound interest is the addition of interest to the principal sum of a loan or deposit, or in other words,
+            interest on interest. It is the result of reinvesting interest, rather than paying it out, so that interest
+            in the next period is then earned on the principal sum plus previously accumulated interest. Compound
+            interest is standard in finance and economics. - <a class="underline"
+                href="https://en.wikipedia.org/wiki/Compound_interest" target="_blank">Wikipedia</a>
+        </p>
+        <p class="my-2 text-sm text-gray-700">
+            The default example above is an example of you saving $250/month when you start earning money into your 401k
+            or IRA and investing it to a mutual fund like VTSAX or VFINX for the next 30 years.
+        </p>
+    </form>
+</div>
+{{end}}
