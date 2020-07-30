@@ -6,12 +6,14 @@ title: Simple File Sharing
 {{define "addHead"}}
 <script src="https://unpkg.com/peerjs@1.3.0/dist/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 {{template "alpinejs" .}}
 <script>
     window.onbeforeunload = function () {
         return "Are you sure you want to leave?";
     }
-
+    // wake our heroku dyno
+    axios.get("https://wikiyou-peer.herokuapp.com");
     function share() {
         return {
             peer: null,
