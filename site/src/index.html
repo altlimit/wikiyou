@@ -32,7 +32,7 @@
                 <div class="mt-6">
                     <h2 class="text-lg text-gray-500">Companies</h2>
                     {{range sources "Path" "/company/*" | sort "Meta.title" "asc"}}
-                    <a class="text-gray-400" href="{{.Path}}">
+                    <a class="block text-gray-400" href="{{.Path}}">
                         {{index .Meta "title"}}
                     </a>
                     {{end}}
