@@ -1,8 +1,4 @@
 #!/bin/bash
 
-mkdir bin
-cd bin
-wget https://github.com/altlimit/sitegen/releases/download/v0.0.7/linux.zip
-unzip linux.zip
-cd ..
-bin/sitegen -minify
+curl -s -S -L https://raw.githubusercontent.com/altlimit/sitegen/master/install.sh | bash
+~/.altlimit/bin/sitegen -minify
