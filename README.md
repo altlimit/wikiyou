@@ -8,7 +8,7 @@ Install [sitegen](https://github.com/altlimit/sitegen)
 
 ```shell
 # Run development
-sitegen -site ./ -public ./docs -serve
+sitegen -serve
 # Run build
-sitegen -site ./ -public ./docs -minify
+sitegen -site -minify
 ```

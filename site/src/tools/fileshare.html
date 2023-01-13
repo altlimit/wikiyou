@@ -12,8 +12,7 @@ title: Simple File Sharing
     window.onbeforeunload = function () {
         return "Are you sure you want to leave?";
     }
-    // wake our heroku dyno
-    axios.get("https://wikiyou-peer.herokuapp.com");
+    axios.get("https://peerjs.wikiyou.org");
     function share() {
         return {
             peer: null,
@@ -191,7 +190,7 @@ title: Simple File Sharing
                     sessionStorage.setItem("peerId", peerId);
                 }
                 this.peer = new Peer(peerId, {
-                    host: 'wikiyou-peer.herokuapp.com',
+                    host: 'peerjs.wikiyou.org',
                     port: 443,
                     path: '/',
                     secure: true
