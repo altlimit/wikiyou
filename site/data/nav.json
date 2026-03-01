@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Home",
+        "path": "/"
+    },
+    {
+        "name": "Companies",
+        "path": "/companies"
+    },
+    {
+        "name": "Apps",
+        "path": "/apps"
+    },
+    {
+        "name": "Websites",
+        "path": "/websites"
+    },
+    {
+        "name": "Tools",
+        "path": "/tools"
+    },
+    {
+        "name": "Contribute",
+        "path": "/contribute"
+    }
+]

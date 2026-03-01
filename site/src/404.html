@@ -2,10 +2,17 @@
 template: main.html
 title: Page Not Found
 path: 404.html
+description: "The page you're looking for doesn't exist on WikiYou."
 ---
 
 {{define "content"}}
-<div class="flex justify-center content-center flex-wrap">
-    <p class="font-sans text-gray-500 error-text">404</p>
+<div class="error-page">
+    <div class="error-code">404</div>
+    <h2>Page Not Found</h2>
+    <p>The page you're looking for doesn't exist or may have been moved.</p>
+    <div class="flex-center gap-3">
+        <a href="/" class="btn btn-primary">Go to Homepage</a>
+        <a href="/contribute" class="btn btn-outline">Create This Page</a>
+    </div>
 </div>
 {{end}}

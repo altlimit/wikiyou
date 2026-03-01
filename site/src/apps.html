@@ -1,0 +1,37 @@
+---
+template: directory.html
+title: Apps
+description: "Browse web applications and software platforms on WikiYou — SaaS products, tools, and digital services."
+og_type: website
+---
+
+{{define "content"}}
+<div class="grid-3">
+    {{$items := sources "Path" "/apps/*" | sort "Meta.title" "asc"}}
+    {{range paginate 12 $items}}
+    <a href="{{.Path}}" class="card card-hover" style="text-decoration:none">
+        <div class="card-icon apps">📱</div>
+        <h3 style="font-size:1.1rem">{{.Meta.title}}</h3>
+        {{if .Meta.industry}}
+        <span class="badge badge-accent mb-2">{{.Meta.industry}}</span>
+        {{end}}
+        {{if .Meta.description}}
+        <p>{{.Meta.description}}</p>
+        {{end}}
+    </a>
+    {{end}}
+</div>
+
+{{if gt .Source.TotalPages 1}}
+<div class="pagination mt-6">
+    {{range pages .Source}}
+    <a href="{{.Path}}" class="btn btn-sm {{if .Active}}btn-primary{{else}}btn-outline{{end}}">{{.Page}}</a>
+    {{end}}
+</div>
+{{end}}
+
+<div class="alert alert-info mt-6">
+    <p><strong>Know a great app?</strong> Anyone can add an application profile to WikiYou. Check out the <a
+            href="/contribute">contribution guide</a> to learn how to submit a new page via GitHub Pull Request.</p>
+</div>
+{{end}}

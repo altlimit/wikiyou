@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     {{template "head" .}}
 </head>
 
-<body class="bg-gray-400">
+<body>
     {{template "nav" .}}
 
-    <div class="flex">
-        <div class="container mx-auto px-8">
+    <main>
+        <div class="container py-6">
             {{template "content" .}}
         </div>
-    </div>
+    </main>
 
     {{template "footer" .}}
 </body>

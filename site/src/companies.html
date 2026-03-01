@@ -1,0 +1,40 @@
+---
+template: directory.html
+title: Companies
+description: "Browse company profiles on WikiYou — from startups to established businesses, contributed by the
+community."
+og_type: website
+---
+
+{{define "content"}}
+<div class="grid-3">
+    {{$items := sources "Path" "/companies/*" | sort "Meta.title" "asc"}}
+    {{range paginate 12 $items}}
+    <a href="{{.Path}}" class="card card-hover" style="text-decoration:none">
+        <h3 style="font-size:1.1rem">{{.Meta.title}}</h3>
+        {{if .Meta.industry}}
+        <span class="badge badge-accent mb-2">{{.Meta.industry}}</span>
+        {{end}}
+        {{if .Meta.description}}
+        <p>{{.Meta.description}}</p>
+        {{end}}
+        {{if .Meta.location}}
+        <span class="card-meta">📍 {{.Meta.location}}</span>
+        {{end}}
+    </a>
+    {{end}}
+</div>
+
+{{if gt .Source.TotalPages 1}}
+<div class="pagination mt-6">
+    {{range pages .Source}}
+    <a href="{{.Path}}" class="btn btn-sm {{if .Active}}btn-primary{{else}}btn-outline{{end}}">{{.Page}}</a>
+    {{end}}
+</div>
+{{end}}
+
+<div class="alert alert-info mt-6">
+    <p><strong>Want to add a company?</strong> Anyone can create a company profile on WikiYou. Check out the <a
+            href="/contribute">contribution guide</a> to learn how to submit a new page via GitHub Pull Request.</p>
+</div>
+{{end}}

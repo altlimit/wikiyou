@@ -1,0 +1,34 @@
+---
+template: directory.html
+title: Tools
+description: "Interactive web tools and calculators on WikiYou — free to use, right in your browser."
+og_type: website
+---
+
+{{define "content"}}
+<div class="grid-3">
+    {{$items := sources "Path" "/tools/*" | sort "Meta.title" "asc"}}
+    {{range paginate 12 $items}}
+    <a href="{{.Path}}" class="card card-hover" style="text-decoration:none">
+        <div class="card-icon tools">🔧</div>
+        <h3 style="font-size:1.1rem">{{.Meta.title}}</h3>
+        {{if .Meta.description}}
+        <p>{{.Meta.description}}</p>
+        {{end}}
+    </a>
+    {{end}}
+</div>
+
+{{if gt .Source.TotalPages 1}}
+<div class="pagination mt-6">
+    {{range pages .Source}}
+    <a href="{{.Path}}" class="btn btn-sm {{if .Active}}btn-primary{{else}}btn-outline{{end}}">{{.Page}}</a>
+    {{end}}
+</div>
+{{end}}
+
+<div class="alert alert-info mt-6">
+    <p><strong>Have a useful tool?</strong> You can contribute interactive calculators, converters, or utilities. See
+        the <a href="/contribute">contribution guide</a> for how to submit your tool via GitHub Pull Request.</p>
+</div>
+{{end}}

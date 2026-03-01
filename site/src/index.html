@@ -1,45 +1,103 @@
+---
+description: "The free, community-built encyclopedia powered by GitHub. Browse articles on companies, tools, people,
+games, apps and more."
+og_type: website
+---
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     {{template "head" .}}
 </head>
-{{$icons := data "icons.json"}}
 
 <body>
-    <div>
-        <!-- Hero start -->
-        <div class="h-scree w-full bg-gray-600">
-            <div class="flex flex-col items-center text-center justify-center h-screen">
-                <h1 class="text-5xl text-white font-bold leading-none mb-4">WikiYou.org</h1>
-                <a href="https://github.com/altlimit/wikiyou" class="text-1xl text-white leading-tight tracking-wide">
-                    <svg class="h-6 fill-current text-gray-100 inline-block" role="img" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path d="{{$icons.github}}" />
-                    </svg>
-                    <span class="pl-1 text-gray-500">Contribute</span>
-                </a>
+    {{template "nav" .}}
+    {{$site := data "site.json"}}
 
-                <div class="mt-6">
-                    <h2 class="text-lg text-gray-500">Tools</h2>
-                    {{range sources "Path" "/tools/*" | sort "Meta.title" "asc"}}
-                    <a class="block text-gray-400" href="{{.Path}}">
-                        {{index .Meta "title"}}
-                    </a>
-                    {{end}}
-                </div>
-
-                <div class="mt-6">
-                    <h2 class="text-lg text-gray-500">Companies</h2>
-                    {{range sources "Path" "/company/*" | sort "Meta.title" "asc"}}
-                    <a class="block text-gray-400" href="{{.Path}}">
-                        {{index .Meta "title"}}
-                    </a>
-                    {{end}}
-                </div>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <h1>WikiYou</h1>
+            <p class="hero-tagline">{{$site.tagline}} — free, open, and powered by GitHub</p>
+            <div>
+                <a href="/contribute" class="btn btn-primary btn-lg mr-2">Start Contributing</a>
+                <a href="{{$site.github}}" class="btn btn-outline btn-lg" style="border-color:#fff;color:#fff"
+                    target="_blank" rel="noopener">View on GitHub</a>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Categories Directory -->
+    <main class="container py-8">
+        <div class="section-title">
+            <h2>Browse by Category</h2>
+        </div>
+
+        <div class="grid-3 mb-8">
+            <!-- Companies -->
+            <a href="/companies" class="card card-hover" style="text-decoration:none">
+                <div class="card-icon companies">🏢</div>
+                <h3>Companies</h3>
+                <p>Profiles of businesses, startups, and organizations from around the world.</p>
+                {{$companies := sources "Path" "/companies/*"}}
+                <span class="card-meta">{{len $companies}} articles</span>
+            </a>
+
+            <!-- Tools -->
+            <a href="/tools" class="card card-hover" style="text-decoration:none">
+                <div class="card-icon tools">🔧</div>
+                <h3>Tools</h3>
+                <p>Interactive calculators, utilities, and web-based tools you can use right now.</p>
+                {{$tools := sources "Path" "/tools/*"}}
+                <span class="card-meta">{{len $tools}} articles</span>
+            </a>
+
+            <!-- People -->
+            <div class="card" style="opacity:0.6">
+                <div class="card-icon people">👤</div>
+                <h3>People</h3>
+                <p>Biographies of notable individuals, creators, and public figures.</p>
+                <span class="card-meta badge badge-accent">Coming soon</span>
+            </div>
+
+            <!-- Games -->
+            <div class="card" style="opacity:0.6">
+                <div class="card-icon games">🎮</div>
+                <h3>Games</h3>
+                <p>Playable browser games, game reviews, and gaming history articles.</p>
+                <span class="card-meta badge badge-accent">Coming soon</span>
+            </div>
+
+            <!-- Apps -->
+            <a href="/apps" class="card card-hover" style="text-decoration:none">
+                <div class="card-icon apps">📱</div>
+                <h3>Apps</h3>
+                <p>Web applications, SaaS platforms, and digital products.</p>
+                {{$apps := sources "Path" "/apps/*"}}
+                <span class="card-meta">{{len $apps}} articles</span>
+            </a>
+
+            <!-- Websites -->
+            <a href="/websites" class="card card-hover" style="text-decoration:none">
+                <div class="card-icon guides">🌐</div>
+                <h3>Websites</h3>
+                <p>Notable websites, blogs, recipe sites, and online communities.</p>
+                {{$websites := sources "Path" "/websites/*"}}
+                <span class="card-meta">{{len $websites}} articles</span>
+            </a>
+        </div>
+
+        <!-- CTA -->
+        <div class="text-center py-8 mt-6">
+            <h3 class="mb-3">Want to add something?</h3>
+            <p class="text-light mb-4">WikiYou is built by people like you. Create a page about anything — a company, a
+                tool, a person, or a topic you care about.</p>
+            <a href="/contribute" class="btn btn-primary btn-lg">Learn How to Contribute</a>
+        </div>
+    </main>
+
+    {{template "footer" .}}
 </body>
 
 </html>

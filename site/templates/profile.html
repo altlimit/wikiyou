@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {{template "head" .}}
+</head>
+
+<body>
+    {{template "nav" .}}
+
+    <main>
+        <div class="profile-layout">
+            <article class="profile-content">
+                {{if .category}}
+                <ul class="breadcrumbs">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/{{.category}}">{{.category_label}}</a></li>
+                    <li>{{.title}}</li>
+                </ul>
+                {{end}}
+
+                <header class="article-header">
+                    <h1>{{.title}}</h1>
+                    {{if .subtitle}}
+                    <div class="article-meta">
+                        <span>{{.subtitle}}</span>
+                    </div>
+                    {{end}}
+                </header>
+
+                <div class="article-body">
+                    {{template "content" .}}
+                </div>
+
+                {{$site := data "site.json"}}
+                <footer class="article-footer">
+                    <a href="{{$site.github}}/blob/master/{{.Source.Local}}" class="edit-link" target="_blank"
+                        rel="noopener">
+                        ✏️ Edit this page on GitHub
+                    </a>
+                </footer>
+            </article>
+
+            <aside class="profile-sidebar">
+                <div class="infobox">
+                    <h3>{{.title}}</h3>
+                    {{if .type}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Type</span>
+                        <span class="infobox-value">{{.type}}</span>
+                    </div>
+                    {{end}}
+                    {{if .industry}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Industry</span>
+                        <span class="infobox-value">{{.industry}}</span>
+                    </div>
+                    {{end}}
+                    {{if .founded}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Founded</span>
+                        <span class="infobox-value">{{.founded}}</span>
+                    </div>
+                    {{end}}
+                    {{if .location}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Location</span>
+                        <span class="infobox-value">{{.location}}</span>
+                    </div>
+                    {{end}}
+                    {{if .website}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Website</span>
+                        <span class="infobox-value"><a href="{{.website}}" target="_blank"
+                                rel="noopener">{{.website}}</a></span>
+                    </div>
+                    {{end}}
+                    {{if .founders}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Founders</span>
+                        <span class="infobox-value">{{.founders}}</span>
+                    </div>
+                    {{end}}
+                    {{if .employees}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Employees</span>
+                        <span class="infobox-value">{{.employees}}</span>
+                    </div>
+                    {{end}}
+                    {{if .born}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Born</span>
+                        <span class="infobox-value">{{.born}}</span>
+                    </div>
+                    {{end}}
+                    {{if .occupation}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Occupation</span>
+                        <span class="infobox-value">{{.occupation}}</span>
+                    </div>
+                    {{end}}
+                    {{if .github}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">GitHub</span>
+                        <span class="infobox-value"><a href="https://github.com/{{.github}}" target="_blank"
+                                rel="noopener">{{.github}}</a></span>
+                    </div>
+                    {{end}}
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</body>
+
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {{template "head" .}}
+</head>
+
+<body>
+    {{template "nav" .}}
+
+    <main>
+        <div class="tool-container">
+            {{if .category}}
+            <ul class="breadcrumbs">
+                <li><a href="/">Home</a></li>
+                <li><a href="/{{.category}}">{{.category_label}}</a></li>
+                <li>{{.title}}</li>
+            </ul>
+            {{end}}
+
+            <div class="tool-header">
+                <h1>{{.title}}</h1>
+                {{if .description}}
+                <p>{{.description}}</p>
+                {{end}}
+            </div>
+
+            <div class="tool-app">
+                {{template "content" .}}
+            </div>
+
+            <div class="tool-info">
+                {{template "tool-info" .}}
+            </div>
+
+            {{$site := data "site.json"}}
+            <div class="article-footer mt-6">
+                <a href="{{$site.github}}/blob/master/{{.Source.Local}}" class="edit-link" target="_blank"
+                    rel="noopener">
+                    ✏️ Edit this page on GitHub
+                </a>
+            </div>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</body>
+
+</html>
+
+{{define "tool-info"}}{{end}}

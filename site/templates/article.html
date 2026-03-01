@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {{template "head" .}}
+</head>
+
+<body>
+    {{template "nav" .}}
+
+    <main>
+        <div class="article-layout">
+            <article>
+                {{if .category}}
+                <ul class="breadcrumbs">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/{{.category}}">{{.category_label}}</a></li>
+                    <li>{{.title}}</li>
+                </ul>
+                {{end}}
+
+                <header class="article-header">
+                    <h1>{{.title}}</h1>
+                    {{if .description}}
+                    <div class="article-meta">
+                        <span>{{.description}}</span>
+                    </div>
+                    {{end}}
+                </header>
+
+                <div class="article-body">
+                    {{template "content" .}}
+                </div>
+
+                {{$site := data "site.json"}}
+                <footer class="article-footer">
+                    <a href="{{$site.github}}/blob/master/{{.Source.Local}}" class="edit-link" target="_blank"
+                        rel="noopener">
+                        ✏️ Edit this page on GitHub
+                    </a>
+                </footer>
+            </article>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</body>
+
+</html>

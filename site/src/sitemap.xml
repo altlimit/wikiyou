@@ -1,0 +1,16 @@
+---
+parse: text
+path: sitemap.xml
+---
+{{- $site := data "site.json" -}}
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{{range sources "Local" "**/src/**.html"}}
+{{- if not (.Local | contains "404.html") -}}
+  <url>
+    <loc>{{$site.url}}{{.Path}}</loc>
+    <lastmod>{{$.Today}}</lastmod>
+  </url>
+{{- end -}}
+{{- end -}}
+</urlset>

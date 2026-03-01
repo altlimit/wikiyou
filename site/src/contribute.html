@@ -1,0 +1,475 @@
+---
+template: article.html
+title: How to Contribute
+description: "Learn how to contribute to WikiYou. Fork the repository, create your page, and submit a Pull Request —
+anyone can add content."
+og_type: article
+---
+
+{{define "content"}}
+<p class="text-lg">
+    WikiYou is a free, community-built encyclopedia powered by GitHub. Anyone can create or edit pages by submitting a
+    Pull Request. This guide explains everything you need to know to get started.
+</p>
+
+<div class="toc">
+    <h4>Contents</h4>
+    <ol>
+        <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#directory-structure">Directory Structure</a></li>
+        <li><a href="#templates">Available Templates</a></li>
+        <li><a href="#template-article">Article Template</a></li>
+        <li><a href="#template-profile">Profile Template</a></li>
+        <li><a href="#template-tool">Tool Template</a></li>
+        <li><a href="#css-helpers">CSS Helper Classes</a></li>
+        <li><a href="#guidelines">Content Guidelines</a></li>
+    </ol>
+</div>
+
+<h2 id="quick-start">1. Quick Start</h2>
+
+<p>Contributing to WikiYou is a simple process using GitHub's Pull Request workflow:</p>
+
+<ul class="steps">
+    <li>
+        <div class="step-content">
+            <h4>Fork the Repository</h4>
+            <p>Go to <a href="https://github.com/altlimit/wikiyou" target="_blank"
+                    rel="noopener">github.com/altlimit/wikiyou</a> and click the <strong>Fork</strong> button in the
+                top-right corner. This creates your own copy of the project.</p>
+        </div>
+    </li>
+    <li>
+        <div class="step-content">
+            <h4>Create Your Page</h4>
+            <p>Add a new <code>.html</code> file in the appropriate category folder under <code>site/src/</code>. Choose
+                the right template and fill in the frontmatter fields (see below).</p>
+        </div>
+    </li>
+    <li>
+        <div class="step-content">
+            <h4>Write Your Content</h4>
+            <p>Write your content inside the <code>{{"{{"}}define "content"{{"}}"}}</code> block using standard HTML and
+                the CSS helper classes provided below. No custom CSS needed!</p>
+        </div>
+    </li>
+    <li>
+        <div class="step-content">
+            <h4>Submit a Pull Request</h4>
+            <p>Commit your changes, push to your fork, then open a Pull Request to the main repository. The maintainers
+                will review and merge your contribution.</p>
+        </div>
+    </li>
+</ul>
+
+<div class="alert alert-info">
+    <p><strong>Tip:</strong> You can create and edit files directly on GitHub without cloning the repository. Just
+        navigate to the folder you want and click "Add file" → "Create new file".</p>
+</div>
+
+<h2 id="directory-structure">2. Directory Structure</h2>
+
+<p>Pages are organized into category folders. Always place your file in the correct category:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Folder</th>
+            <th>Category</th>
+            <th>What Goes Here</th>
+            <th>Template</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>site/src/companies/</code></td>
+            <td>Companies</td>
+            <td>Business profiles, startups, organizations</td>
+            <td><code>profile.html</code></td>
+        </tr>
+        <tr>
+            <td><code>site/src/tools/</code></td>
+            <td>Tools</td>
+            <td>Calculators, converters, interactive utilities</td>
+            <td><code>tool.html</code></td>
+        </tr>
+        <tr>
+            <td><code>site/src/people/</code></td>
+            <td>People</td>
+            <td>Biographies, public figures, creators</td>
+            <td><code>profile.html</code></td>
+        </tr>
+        <tr>
+            <td><code>site/src/games/</code></td>
+            <td>Games</td>
+            <td>Browser games, game reviews, gaming history</td>
+            <td><code>article.html</code> or <code>tool.html</code></td>
+        </tr>
+        <tr>
+            <td><code>site/src/apps/</code></td>
+            <td>Apps</td>
+            <td>App reviews, feature walkthroughs, app history</td>
+            <td><code>article.html</code></td>
+        </tr>
+        <tr>
+            <td><code>site/src/guides/</code></td>
+            <td>Guides</td>
+            <td>How-to articles, tutorials, educational content</td>
+            <td><code>article.html</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="alert alert-warning">
+    <p><strong>Important:</strong> Use lowercase, hyphenated filenames. For example: <code>my-company-name.html</code>,
+        not <code>My Company Name.html</code>.</p>
+</div>
+
+<h2 id="templates">3. Available Templates</h2>
+
+<p>WikiYou provides several templates designed for different types of content. Choose the one that best fits your page:
+</p>
+
+<div class="grid-3 mb-6">
+    <div class="template-card">
+        <div class="template-card-header">📄 article.html</div>
+        <div class="template-card-body">
+            <p>General-purpose wiki article layout. Best for informational content, histories, tutorials, and guides.
+            </p>
+            <span class="badge badge-accent">General Use</span>
+        </div>
+    </div>
+    <div class="template-card">
+        <div class="template-card-header">👤 profile.html</div>
+        <div class="template-card-body">
+            <p>Wikipedia-style profile with an infobox sidebar. Best for companies, organizations, and people.</p>
+            <span class="badge badge-accent">Profiles</span>
+        </div>
+    </div>
+    <div class="template-card">
+        <div class="template-card-header">🔧 tool.html</div>
+        <div class="template-card-body">
+            <p>Interactive tool layout with app container. Best for calculators, converters, and browser-based tools.
+            </p>
+            <span class="badge badge-accent">Interactive</span>
+        </div>
+    </div>
+</div>
+
+<h2 id="template-article">4. Article Template</h2>
+
+<p>The article template is the most versatile. Use it for any informational content.</p>
+
+<div class="code-block">
+    <span class="code-label">HTML</span>
+    <pre><code>---
+template: article.html
+title: Your Article Title
+description: "A brief description for SEO and social sharing."
+category: guides
+category_label: Guides
+og_type: article
+---
+
+{{"{{"}}define "content"{{"}}"}}
+&lt;h2&gt;Section Heading&lt;/h2&gt;
+&lt;p&gt;Your content here. Use standard HTML tags.&lt;/p&gt;
+
+&lt;h2&gt;Another Section&lt;/h2&gt;
+&lt;p&gt;More content. You can use lists, tables, code blocks, and more.&lt;/p&gt;
+&lt;ul&gt;
+    &lt;li&gt;Point one&lt;/li&gt;
+    &lt;li&gt;Point two&lt;/li&gt;
+&lt;/ul&gt;
+{{"{{"}}end{{"}}"}}</code></pre>
+</div>
+
+<h2 id="template-profile">5. Profile Template</h2>
+
+<p>The profile template shows a Wikipedia-style infobox sidebar. The infobox fields are populated automatically from
+    your frontmatter.</p>
+
+<div class="code-block">
+    <span class="code-label">HTML</span>
+    <pre><code>---
+template: profile.html
+title: Company or Person Name
+description: "Brief description for SEO."
+category: companies
+category_label: Companies
+type: Private Company
+industry: Software Development
+founded: "2020"
+location: San Francisco, CA
+website: https://example.com
+github: username
+og_type: article
+---
+
+{{"{{"}}define "content"{{"}}"}}
+&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;An overview paragraph about the subject.&lt;/p&gt;
+
+&lt;h2&gt;History&lt;/h2&gt;
+&lt;p&gt;Historical details and background.&lt;/p&gt;
+{{"{{"}}end{{"}}"}}</code></pre>
+</div>
+
+<p><strong>Available infobox fields:</strong></p>
+<table>
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Description</th>
+            <th>Used For</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>type</code></td>
+            <td>Entity type (e.g., "Private Company")</td>
+            <td>Companies, Orgs</td>
+        </tr>
+        <tr>
+            <td><code>industry</code></td>
+            <td>Industry or field</td>
+            <td>Companies</td>
+        </tr>
+        <tr>
+            <td><code>founded</code></td>
+            <td>Year founded</td>
+            <td>Companies</td>
+        </tr>
+        <tr>
+            <td><code>location</code></td>
+            <td>Headquarters or location</td>
+            <td>Companies, People</td>
+        </tr>
+        <tr>
+            <td><code>website</code></td>
+            <td>Official website URL</td>
+            <td>Companies, People</td>
+        </tr>
+        <tr>
+            <td><code>founders</code></td>
+            <td>Founder names</td>
+            <td>Companies</td>
+        </tr>
+        <tr>
+            <td><code>employees</code></td>
+            <td>Employee count</td>
+            <td>Companies</td>
+        </tr>
+        <tr>
+            <td><code>github</code></td>
+            <td>GitHub username</td>
+            <td>Companies, People</td>
+        </tr>
+        <tr>
+            <td><code>born</code></td>
+            <td>Birth date/year</td>
+            <td>People</td>
+        </tr>
+        <tr>
+            <td><code>occupation</code></td>
+            <td>Job title or occupation</td>
+            <td>People</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="template-tool">6. Tool Template</h2>
+
+<p>The tool template provides a centered layout for interactive applications. Include your JavaScript in the
+    <code>addHead</code> block.</p>
+
+<div class="code-block">
+    <span class="code-label">HTML</span>
+    <pre><code>---
+template: tool.html
+title: My Calculator
+description: "A brief description of what this tool does."
+category: tools
+category_label: Tools
+info: true
+og_type: article
+---
+
+{{"{{"}}define "addHead"{{"}}"}}
+&lt;script&gt;
+    // Your JavaScript here
+&lt;/script&gt;
+{{"{{"}}end{{"}}"}}
+
+{{"{{"}}define "content"{{"}}"}}
+&lt;!-- Your interactive tool HTML here --&gt;
+&lt;div class="form-group"&gt;
+    &lt;label for="input1"&gt;Enter a value&lt;/label&gt;
+    &lt;input type="text" id="input1"&gt;
+&lt;/div&gt;
+&lt;div class="form-result" id="result"&gt;Result&lt;/div&gt;
+{{"{{"}}end{{"}}"}}
+
+{{"{{"}}define "tool-info"{{"}}"}}
+&lt;h2&gt;About This Tool&lt;/h2&gt;
+&lt;p&gt;Explain what the tool does and how to use it.&lt;/p&gt;
+{{"{{"}}end{{"}}"}}</code></pre>
+</div>
+
+<h2 id="css-helpers">7. CSS Helper Classes</h2>
+
+<p>WikiYou provides a rich set of CSS utility classes so you can create well-structured pages without writing custom
+    CSS. Here are the most commonly used classes:</p>
+
+<h3>Layout</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>container</code></td>
+            <td>Centered content with max-width and padding</td>
+        </tr>
+        <tr>
+            <td><code>grid-2</code>, <code>grid-3</code>, <code>grid-4</code></td>
+            <td>Responsive grid layouts (2, 3, or 4 columns)</td>
+        </tr>
+        <tr>
+            <td><code>flex</code>, <code>flex-col</code>, <code>flex-center</code></td>
+            <td>Flexbox utilities</td>
+        </tr>
+        <tr>
+            <td><code>gap-1</code> through <code>gap-6</code></td>
+            <td>Gap between flex/grid items</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Typography</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>text-sm</code>, <code>text-lg</code>, <code>text-xl</code>, <code>text-2xl</code></td>
+            <td>Font sizes</td>
+        </tr>
+        <tr>
+            <td><code>font-bold</code>, <code>font-semibold</code></td>
+            <td>Font weights</td>
+        </tr>
+        <tr>
+            <td><code>text-muted</code>, <code>text-light</code></td>
+            <td>Muted/light text colors</td>
+        </tr>
+        <tr>
+            <td><code>text-center</code>, <code>text-right</code></td>
+            <td>Text alignment</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Spacing</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>mt-1</code> through <code>mt-8</code></td>
+            <td>Margin top (scales from 0.25rem to 3rem)</td>
+        </tr>
+        <tr>
+            <td><code>mb-1</code> through <code>mb-8</code></td>
+            <td>Margin bottom</td>
+        </tr>
+        <tr>
+            <td><code>p-2</code> through <code>p-6</code></td>
+            <td>Padding all sides</td>
+        </tr>
+        <tr>
+            <td><code>py-2</code> through <code>py-10</code></td>
+            <td>Padding top and bottom</td>
+        </tr>
+        <tr>
+            <td><code>px-3</code> through <code>px-6</code></td>
+            <td>Padding left and right</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Components</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>card</code>, <code>card-hover</code></td>
+            <td>Card with border and optional hover effect</td>
+        </tr>
+        <tr>
+            <td><code>badge</code>, <code>badge-accent</code></td>
+            <td>Inline badge/tag</td>
+        </tr>
+        <tr>
+            <td><code>btn</code>, <code>btn-primary</code>, <code>btn-outline</code></td>
+            <td>Button styles</td>
+        </tr>
+        <tr>
+            <td><code>alert alert-info</code></td>
+            <td>Info notice box (also: <code>alert-success</code>, <code>alert-warning</code>,
+                <code>alert-danger</code>)</td>
+        </tr>
+        <tr>
+            <td><code>bg-white</code>, <code>bg-subtle</code></td>
+            <td>Background colors</td>
+        </tr>
+        <tr>
+            <td><code>rounded</code>, <code>rounded-lg</code></td>
+            <td>Border radius</td>
+        </tr>
+        <tr>
+            <td><code>shadow</code>, <code>shadow-md</code></td>
+            <td>Box shadows</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="guidelines">8. Content Guidelines</h2>
+
+<ul>
+    <li><strong>Be factual and neutral.</strong> Write in an encyclopedic tone similar to Wikipedia. Avoid promotional
+        language.</li>
+    <li><strong>Use sections.</strong> Break your content into clearly headed sections using <code>&lt;h2&gt;</code> and
+        <code>&lt;h3&gt;</code> tags.</li>
+    <li><strong>Write enough content.</strong> Aim for at least 3-4 paragraphs. Stubs are acceptable but fuller articles
+        are preferred.</li>
+    <li><strong>Add descriptions.</strong> Always include a <code>description</code> field in your frontmatter for SEO
+        and social sharing.</li>
+    <li><strong>Quote multi-line strings.</strong> YAML frontmatter values that contain colons or span multiple lines
+        must be wrapped in quotes.</li>
+    <li><strong>Use lowercase filenames.</strong> Use hyphens to separate words: <code>my-page-title.html</code>.</li>
+    <li><strong>Cite your sources.</strong> Link to references or external sources when presenting factual claims.</li>
+    <li><strong>No inappropriate content.</strong> Content must be suitable for a general audience.</li>
+</ul>
+
+<div class="alert alert-success">
+    <p><strong>Ready to contribute?</strong> Head over to the <a href="https://github.com/altlimit/wikiyou"
+            target="_blank" rel="noopener">WikiYou GitHub repository</a> and create your first page!</p>
+</div>
+{{end}}

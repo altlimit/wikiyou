@@ -1,13 +1,31 @@
 ---
-template: main.html
+template: tool.html
 title: Simple File Sharing
+description: "Share files directly between browsers using peer-to-peer WebRTC connections. No uploads, no servers —
+completely private."
+category: tools
+category_label: Tools
+og_type: article
 ---
 
 {{define "addHead"}}
 <script src="https://unpkg.com/peerjs@1.3.0/dist/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-{{template "alpinejs" .}}
+<script>
+    (function (d) {
+        if (d.currentScript) {
+            var s = d.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+            s.defer = true;
+            d.head.appendChild(s);
+        } else {
+            var s = d.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine-ie11.min.js";
+            d.head.appendChild(s);
+        }
+    })(document);
+</script>
 <script>
     window.onbeforeunload = function () {
         return "Are you sure you want to leave?";
@@ -45,10 +63,10 @@ title: Simple File Sharing
                 e.stopPropagation()
             },
             highlight: function (e) {
-                this.$refs.dropArea.classList.add('border-red-300')
+                this.$refs.dropArea.classList.add('drag-active')
             },
             unhighlight: function (e) {
-                this.$refs.dropArea.classList.remove('border-red-300')
+                this.$refs.dropArea.classList.remove('drag-active')
             },
             addShared: function (files) {
                 for (var i = 0; i < files.length; i++) {
@@ -228,20 +246,17 @@ title: Simple File Sharing
                         this.receive(data);
                     }.bind(this));
                     conn.on('close', function () {
-                        console.log("Closed", conn.peer);
                         delete this.peers[conn.peer];
                         delete this.otherFiles[conn.peer];
                         this.sendAll("peers", this.peerIds());
                     }.bind(this));
                 }.bind(this));
                 this.peer.on('disconnected', function () {
-                    console.error('disconnected');
                     this.peer.id = this.lastPeerId;
                     this.peer._lastServerId = this.lastPeerId;
                     this.peer.reconnect();
                 }.bind(this));
                 this.peer.on("error", function (err) {
-                    console.error("peer error", err);
                     this.ready = true;
                     this.error = "Connection error";
                 }.bind(this));
@@ -318,9 +333,8 @@ title: Simple File Sharing
             },
             parseFile: function (file, callback) {
                 var fileSize = file.size;
-                var chunkSize = 64 * 1024; // bytes
+                var chunkSize = 64 * 1024;
                 var offset = 0;
-                var self = this; // we need a reference to the current object
                 var chunkReaderBlock = null;
 
                 var readEventHandler = function (evt) {
@@ -329,15 +343,11 @@ title: Simple File Sharing
                             .byteLength : evt.target.result.length;
                         callback(evt.target.result, offset >= fileSize);
                     } else {
-                        console.log("Read error: " + evt.target.error);
                         return;
                     }
                     if (offset >= fileSize) {
-                        console.log("Done reading file");
                         return;
                     }
-
-                    // of to the next chunk
                     chunkReaderBlock(offset, chunkSize, file);
                 }
 
@@ -347,7 +357,6 @@ title: Simple File Sharing
                     r.onload = readEventHandler;
                     r.readAsArrayBuffer(blob);
                 }
-                // now let's start the read with the first block
                 chunkReaderBlock(offset, chunkSize, file);
             },
             downloadProgress: function (file) {
@@ -364,64 +373,149 @@ title: Simple File Sharing
         };
     }
 </script>
+<style>
+    .drop-zone {
+        border: 2px dashed var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        text-align: center;
+        transition: all var(--transition);
+    }
+
+    .drop-zone.drag-active {
+        border-color: var(--color-accent);
+        background: var(--color-accent-light);
+    }
+
+    .file-row {
+        display: flex;
+        align-items: center;
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--color-border-light);
+        gap: var(--space-4);
+        flex-wrap: wrap;
+    }
+
+    .file-row:last-child {
+        border-bottom: none;
+    }
+
+    .file-name {
+        flex: 2;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .file-type {
+        flex: 1;
+        color: var(--color-text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .file-size {
+        flex: 1;
+        color: var(--color-text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .file-actions {
+        flex: 1;
+        text-align: right;
+    }
+
+    .progress-bar {
+        width: 100%;
+        background: var(--color-bg-subtle);
+        height: 4px;
+        border-radius: 2px;
+        margin-top: var(--space-2);
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--color-accent);
+        border-radius: 2px;
+        transition: width 0.3s;
+    }
+</style>
 {{end}}
+
 {{define "content"}}
-<div id="drop-area" class="bg-white border-dashed border-4 px-2 py-4 text-center" x-data="share()" x-init="init"
-    x-ref="dropArea">
-    <p class="py-1 text-gray-500" x-text="ready ? 'ID: ' + peer.id : 'Connecting...'"></p>
-    <div class="m-4" v-show="ready" x-show="ready">
-        <p class="p-2">Share the url or let them scan QR code to anyone you want to share files with.</p>
-        <label class="inline-block text-sm">Share URL:</label>
-        <input type="text" x-ref="share" x-model="shareUrl" class="border shadow w-64 mb-2">
-        <button x-on:click="copyUrl"
-            class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
-            Copy Url
-        </button>
-        <button x-on:click="changePeerId"
-            class="inline-block mb-2 text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500 cursor-pointer">
-            New Share
-        </button>
-        <div x-ref="qrcode" class="flex justify-center"></div>
+<div id="drop-area" class="drop-zone" x-data="share()" x-init="init" x-ref="dropArea">
+    <p class="text-light mb-3" x-text="ready ? 'Connected — ID: ' + peer.id : 'Connecting...'"></p>
+
+    <div x-show="ready" x-cloak>
+        <div class="mb-4">
+            <p class="mb-2">Share this link or scan the QR code to connect with others:</p>
+            <div class="flex flex-center gap-2 mb-3" style="flex-wrap:wrap">
+                <input type="text" x-ref="share" x-model="shareUrl" style="max-width:400px" readonly>
+                <button class="btn btn-primary btn-sm" x-on:click="copyUrl">Copy URL</button>
+                <button class="btn btn-outline btn-sm" x-on:click="changePeerId">New Session</button>
+            </div>
+            <div x-ref="qrcode" class="flex-center mb-3"></div>
+        </div>
+
+        <div class="mb-4">
+            <p class="mb-2">Drop files here or click the button below to share.</p>
+            <p class="text-sm text-muted mb-3">Files are transferred directly between browsers using WebRTC. Nothing is
+                uploaded to any server.</p>
+            <input type="file" id="file" class="hidden" multiple accept="*/*" x-on:change="handleFiles">
+            <label class="btn btn-primary" for="file">Select Files to Share</label>
+        </div>
     </div>
-    <form x-show="ready" x-cloak>
-        <p class="p-2">Drop files you want to share or click button below to browse.</p>
-        <p class="p-2 text-sm text-gray-500">
-            This software does not upload anything you share to any server. You only use bandwidth when somebody
-            else tries to download your file. If you have any feature suggestions or want to do it yourself, please
-            go to github project by clicking the contribute link below and create an issue or pull request.
-        </p>
-        <input type="file" id="file" class="hidden" multiple accept="*/*" x-on:change="handleFiles">
-        <label
-            class="inline-block text-lg border px-4 py-2 bg-teal-400 rounded w-full lg:w-auto hover:bg-teal-500 cursor-pointer"
-            for="file">Share File(s)</label>
-    </form>
-    <p class="p-4 text-red-500" x-text="error" x-show="error"></p>
+
+    <p class="text-danger" x-text="error" x-show="error"></p>
+
     <template x-if="peerIds().length > 0">
-        <p class="text-sm text-gray-700">Connected Clients:</p>
-        <p x-text="peerIds()"></p>
+        <p class="text-sm text-light mt-2"><span x-text="peerIds().length"></span> connected peer(s)</p>
     </template>
 
-    <div class="min-w-full bg-white mt-4" x-show="allFiles().length > 0">
+    <div class="border rounded mt-4" x-show="allFiles().length > 0" style="text-align:left">
         <template x-for="(file, index) in allFiles()" :key="index">
-            <div class="border flex flex-wrap">
-                <div class="flex-1 text-left py-3 px-4" x-on:click="download(file)" x-text="file.name"></div>
-                <div class="flex-1 text-left py-3 px-4" x-text="file.type"></div>
-                <div class="flex-1 text-left py-3 px-4" x-text="file.owner"></div>
-                <div class="flex-1 text-left py-3 px-4" x-text="file.size"></div>
-                <div class="flex-1 text-left py-3 px-4">
-                    <button
-                        class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-red-400 rounded w-auto hover:bg-red-500"
-                        x-on:click="remove(index)" x-show="file.owner == peer.id">Stop Sharing</button>
-                    <button
-                        class="inline-block w-full lg:w-auto text-sm border px-2 py-1 bg-teal-400 rounded w-auto hover:bg-teal-500"
-                        x-on:click="download(file)"
-                        x-show="downloadProgress(file) == 0 && file.owner != peer.id">Download</button>
+            <div>
+                <div class="file-row">
+                    <span class="file-name" x-text="file.name" x-on:click="download(file)"
+                        style="cursor:pointer"></span>
+                    <span class="file-type" x-text="file.type || 'unknown'"></span>
+                    <span class="file-size" x-text="(file.size / 1024).toFixed(1) + ' KB'"></span>
+                    <span class="file-actions">
+                        <button class="btn btn-sm" style="background:var(--color-danger);color:#fff"
+                            x-on:click="remove(index)" x-show="file.owner == peer.id">Remove</button>
+                        <button class="btn btn-primary btn-sm" x-on:click="download(file)"
+                            x-show="downloadProgress(file) == 0 && file.owner != peer.id">Download</button>
+                    </span>
                 </div>
-                <div class="shadow w-full bg-grey-light mt-2 w-full" x-show="downloadProgress(file) > 0">
-                    <div class="bg-teal-500 h-1" x-bind:style="'width: '+downloadProgress(file)+'%'"></div>
+                <div class="progress-bar" x-show="downloadProgress(file) > 0">
+                    <div class="progress-fill" x-bind:style="'width: '+downloadProgress(file)+'%'"></div>
                 </div>
             </div>
         </template>
     </div>
 </div>
+{{end}}
+
+{{define "tool-info"}}
+<h2>How It Works</h2>
+<p>
+    Simple File Sharing uses <strong>WebRTC</strong> (Web Real-Time Communication) to create direct peer-to-peer
+    connections between browsers. When you share a file, it travels directly from your device to the recipient's device
+    — no intermediate server stores your data at any point during the transfer.
+</p>
+
+<h2>Privacy &amp; Security</h2>
+<ul>
+    <li><strong>No uploads</strong> — Your files never leave your device until someone specifically downloads them.</li>
+    <li><strong>Direct transfer</strong> — Data flows peer-to-peer via encrypted WebRTC data channels.</li>
+    <li><strong>No storage</strong> — Nothing is stored on any server. When you close the page, your shared files are no
+        longer accessible.</li>
+    <li><strong>Bandwidth on-demand</strong> — You only use bandwidth when another peer downloads your file.</li>
+</ul>
+
+<h2>Use Cases</h2>
+<ul>
+    <li>Sharing files between your own devices without cloud storage</li>
+    <li>Sending documents to someone on the same network</li>
+    <li>Quick file transfers without signing up for any service</li>
+    <li>Sharing files in environments where cloud upload is restricted</li>
+</ul>
 {{end}}

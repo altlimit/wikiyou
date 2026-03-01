@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {{template "head" .}}
+</head>
+
+<body>
+    {{template "nav" .}}
+
+    <main>
+        <div class="container py-6">
+            <ul class="breadcrumbs">
+                <li><a href="/">Home</a></li>
+                <li>{{.title}}</li>
+            </ul>
+
+            <header class="article-header">
+                <h1>{{.title}}</h1>
+                {{if .description}}
+                <div class="article-meta">
+                    <span>{{.description}}</span>
+                </div>
+                {{end}}
+            </header>
+
+            {{template "content" .}}
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</body>
+
+</html>
