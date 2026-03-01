@@ -1,5 +1,15 @@
 {{define "footer"}}
 {{$site := data "site.json"}}
+{{$relPath := .Source.Value "RelPath"}}
+{{if or ($relPath | contains ".html") ($relPath | contains ".md")}}
+<div class="container">
+    <div class="article-footer mt-6">
+        <a href="{{$site.github}}/blob/main/site/src/{{$relPath}}" class="edit-link" target="_blank" rel="noopener">
+            ✏️ Edit this page on GitHub
+        </a>
+    </div>
+</div>
+{{end}}
 <footer class="site-footer">
     <div class="footer-inner">
         <div class="footer-brand">
@@ -11,7 +21,9 @@
             <ul>
                 <li><a href="/">Home</a></li>
                 <li><a href="/companies">Companies</a></li>
+                <li><a href="/people">People</a></li>
                 <li><a href="/apps">Apps</a></li>
+                <li><a href="/games">Games</a></li>
                 <li><a href="/websites">Websites</a></li>
                 <li><a href="/tools">Tools</a></li>
             </ul>
