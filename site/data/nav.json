@@ -4,28 +4,39 @@
         "path": "/"
     },
     {
-        "name": "Companies",
-        "path": "/companies"
-    },
-    {
-        "name": "People",
-        "path": "/people"
-    },
-    {
-        "name": "Apps",
-        "path": "/apps"
-    },
-    {
-        "name": "Games",
-        "path": "/games"
-    },
-    {
-        "name": "Websites",
-        "path": "/websites"
-    },
-    {
-        "name": "Tools",
-        "path": "/tools"
+        "name": "Browse",
+        "children": [
+            {
+                "name": "Companies",
+                "icon": "🏢",
+                "path": "/companies"
+            },
+            {
+                "name": "People",
+                "icon": "👤",
+                "path": "/people"
+            },
+            {
+                "name": "Apps",
+                "icon": "📱",
+                "path": "/apps"
+            },
+            {
+                "name": "Games",
+                "icon": "🎮",
+                "path": "/games"
+            },
+            {
+                "name": "Websites",
+                "icon": "🌐",
+                "path": "/websites"
+            },
+            {
+                "name": "Tools",
+                "icon": "🔧",
+                "path": "/tools"
+            }
+        ]
     },
     {
         "name": "Contribute",

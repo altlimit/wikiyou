@@ -8,7 +8,7 @@ og_type: website
 
 {{define "content"}}
 <div class="grid-3">
-    {{$items := sources "Path" "/games/*" | sort "Meta.title" "asc"}}
+    {{$items := sources "RelPath" "games/*.html" | sort "Meta.title" "asc"}}
     {{range paginate 12 $items}}
     <a href="{{.Path}}" class="card card-hover" style="text-decoration:none">
         <div class="card-icon games">🎮</div>

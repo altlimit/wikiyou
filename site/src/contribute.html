@@ -20,7 +20,9 @@ og_type: article
         <li><a href="#templates">Available Templates</a></li>
         <li><a href="#template-article">Article Template</a></li>
         <li><a href="#template-profile">Profile Template</a></li>
+        <li><a href="#template-person">Person Template</a></li>
         <li><a href="#template-tool">Tool Template</a></li>
+        <li><a href="#template-game">Game Template</a></li>
         <li><a href="#css-helpers">CSS Helper Classes</a></li>
         <li><a href="#guidelines">Content Guidelines</a></li>
     </ol>
@@ -97,13 +99,13 @@ og_type: article
             <td><code>site/src/people/</code></td>
             <td>People</td>
             <td>Biographies, public figures, creators</td>
-            <td><code>profile.html</code></td>
+            <td><code>person.html</code></td>
         </tr>
         <tr>
             <td><code>site/src/games/</code></td>
             <td>Games</td>
             <td>Browser games, game reviews, gaming history</td>
-            <td><code>article.html</code> or <code>tool.html</code></td>
+            <td><code>game.html</code></td>
         </tr>
         <tr>
             <td><code>site/src/apps/</code></td>
@@ -152,6 +154,20 @@ og_type: article
             <p>Interactive tool layout with app container. Best for calculators, converters, and browser-based tools.
             </p>
             <span class="badge badge-accent">Interactive</span>
+        </div>
+    </div>
+    <div class="template-card">
+        <div class="template-card-header">👤 person.html</div>
+        <div class="template-card-body">
+            <p>Biography layout with infobox sidebar for birth, nationality, occupation, and more.</p>
+            <span class="badge badge-accent">People</span>
+        </div>
+    </div>
+    <div class="template-card">
+        <div class="template-card-header">🎮 game.html</div>
+        <div class="template-card-body">
+            <p>Interactive game layout with canvas container and info section. Best for browser-based games.</p>
+            <span class="badge badge-accent">Games</span>
         </div>
     </div>
 </div>
@@ -278,10 +294,91 @@ og_type: article
     </tbody>
 </table>
 
-<h2 id="template-tool">6. Tool Template</h2>
+<h2 id="template-person">6. Person Template</h2>
+
+<p>The person template is similar to the profile template but designed specifically for biographies. It includes an
+    infobox sidebar with fields for biographical details.</p>
+
+<div class="code-block">
+    <span class="code-label">HTML</span>
+    <pre><code>---
+template: person.html
+title: Person Name
+subtitle: "Short tagline or description"
+description: "Brief description for SEO."
+category: people
+category_label: People
+born: "January 1, 1900"
+died: "December 31, 1980"
+nationality: "American"
+occupation: "Inventor, Engineer"
+known_for: "Notable achievement or invention"
+education: "University Name"
+awards: "Award Name, Another Award"
+og_type: article
+---
+
+{{"{{"}}define "content"{{"}}"}}
+&lt;h2&gt;Early Life&lt;/h2&gt;
+&lt;p&gt;Background and childhood details.&lt;/p&gt;
+
+&lt;h2&gt;Career&lt;/h2&gt;
+&lt;p&gt;Professional accomplishments.&lt;/p&gt;
+
+&lt;h2&gt;Legacy&lt;/h2&gt;
+&lt;p&gt;Impact and lasting contributions.&lt;/p&gt;
+{{"{{"}}end{{"}}"}}</code></pre>
+</div>
+
+<p><strong>Person infobox fields:</strong></p>
+<table>
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>born</code></td>
+            <td>Birth date or year</td>
+        </tr>
+        <tr>
+            <td><code>died</code></td>
+            <td>Death date or year (omit if still living)</td>
+        </tr>
+        <tr>
+            <td><code>nationality</code></td>
+            <td>Nationality or citizenship</td>
+        </tr>
+        <tr>
+            <td><code>occupation</code></td>
+            <td>Job titles or roles</td>
+        </tr>
+        <tr>
+            <td><code>known_for</code></td>
+            <td>Notable achievements or inventions</td>
+        </tr>
+        <tr>
+            <td><code>education</code></td>
+            <td>Schools or universities attended</td>
+        </tr>
+        <tr>
+            <td><code>awards</code></td>
+            <td>Awards and honors</td>
+        </tr>
+        <tr>
+            <td><code>website</code></td>
+            <td>Personal website URL</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="template-tool">7. Tool Template</h2>
 
 <p>The tool template provides a centered layout for interactive applications. Include your JavaScript in the
-    <code>addHead</code> block.</p>
+    <code>addHead</code> block.
+</p>
 
 <div class="code-block">
     <span class="code-label">HTML</span>
@@ -316,7 +413,51 @@ og_type: article
 {{"{{"}}end{{"}}"}}</code></pre>
 </div>
 
-<h2 id="css-helpers">7. CSS Helper Classes</h2>
+<h2 id="template-game">8. Game Template</h2>
+
+<p>The game template provides a layout for browser-based games with a canvas/app container and an info section. Place
+    your JavaScript in a sibling file (e.g., <code>games/snake.js</code> for <code>games/snake.html</code>).</p>
+
+<div class="code-block">
+    <span class="code-label">HTML</span>
+    <pre><code>---
+template: game.html
+title: My Game
+description: "A brief description of the game."
+category: games
+category_label: Games
+og_type: article
+---
+
+{{"{{"}}define "addHead"{{"}}"}}
+&lt;style&gt;
+    /* Game-specific styles */
+&lt;/style&gt;
+{{"{{"}}end{{"}}"}}
+
+{{"{{"}}define "content"{{"}}"}}
+&lt;!-- Your game HTML here --&gt;
+&lt;canvas id="game-canvas" width="400" height="400"&gt;&lt;/canvas&gt;
+&lt;script src="/games/my-game.js"&gt;&lt;/script&gt;
+{{"{{"}}end{{"}}"}}
+
+{{"{{"}}define "game-info"{{"}}"}}
+&lt;h2&gt;How to Play&lt;/h2&gt;
+&lt;p&gt;Instructions for the game.&lt;/p&gt;
+
+&lt;h2&gt;About This Game&lt;/h2&gt;
+&lt;p&gt;Background and history of the game.&lt;/p&gt;
+{{"{{"}}end{{"}}"}}</code></pre>
+</div>
+
+<div class="alert alert-info">
+    <p><strong>Tip:</strong> Keep your game JavaScript in a separate file alongside the HTML (e.g.,
+        <code>games/snake.js</code> next to <code>games/snake.html</code>). This keeps things organized and the JS file
+        will be automatically copied to the output.
+    </p>
+</div>
+
+<h2 id="css-helpers">9. CSS Helper Classes</h2>
 
 <p>WikiYou provides a rich set of CSS utility classes so you can create well-structured pages without writing custom
     CSS. Here are the most commonly used classes:</p>
@@ -433,7 +574,8 @@ og_type: article
         <tr>
             <td><code>alert alert-info</code></td>
             <td>Info notice box (also: <code>alert-success</code>, <code>alert-warning</code>,
-                <code>alert-danger</code>)</td>
+                <code>alert-danger</code>)
+            </td>
         </tr>
         <tr>
             <td><code>bg-white</code>, <code>bg-subtle</code></td>
@@ -450,13 +592,14 @@ og_type: article
     </tbody>
 </table>
 
-<h2 id="guidelines">8. Content Guidelines</h2>
+<h2 id="guidelines">10. Content Guidelines</h2>
 
 <ul>
     <li><strong>Be factual and neutral.</strong> Write in an encyclopedic tone similar to Wikipedia. Avoid promotional
         language.</li>
     <li><strong>Use sections.</strong> Break your content into clearly headed sections using <code>&lt;h2&gt;</code> and
-        <code>&lt;h3&gt;</code> tags.</li>
+        <code>&lt;h3&gt;</code> tags.
+    </li>
     <li><strong>Write enough content.</strong> Aim for at least 3-4 paragraphs. Stubs are acceptable but fuller articles
         are preferred.</li>
     <li><strong>Add descriptions.</strong> Always include a <code>description</code> field in your frontmatter for SEO
