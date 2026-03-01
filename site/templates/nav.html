@@ -15,6 +15,11 @@
                 {{end}}
             </ul>
 
+            <div class="search-container relative">
+                <input type="text" id="site-search" class="search-input" placeholder="Search..." autocomplete="off">
+                <div id="search-results" class="search-dropdown hidden"></div>
+            </div>
+
             <a href="{{$site.github}}" class="nav-github" target="_blank" rel="noopener">
                 <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -31,6 +36,80 @@
     (function () {
         var t = document.getElementById('nav-toggle'), n = document.getElementById('nav-links');
         if (t && n) { t.addEventListener('click', function () { n.classList.toggle('open'); }) }
+
+        var searchInput = document.getElementById('site-search');
+        var searchResults = document.getElementById('search-results');
+        var searchData = [];
+        var loaded = false;
+
+        if (searchInput && searchResults) {
+            searchInput.addEventListener('focus', function () {
+                if (!loaded) {
+                    fetch('/search.xml')
+                        .then(function (response) { return response.text(); })
+                        .then(function (str) { return (new window.DOMParser()).parseFromString(str, "text/xml"); })
+                        .then(function (data) {
+                            var pages = data.getElementsByTagName("page");
+                            for (var i = 0; i < pages.length; i++) {
+                                var title = (pages[i].getElementsByTagName("title")[0] || {}).textContent || '';
+                                if (!title) continue;
+                                searchData.push({
+                                    title: title,
+                                    description: (pages[i].getElementsByTagName("description")[0] || {}).textContent || '',
+                                    url: (pages[i].getElementsByTagName("url")[0] || {}).textContent || '',
+                                    category_label: (pages[i].getElementsByTagName("category_label")[0] || {}).textContent || ''
+                                });
+                            }
+                            loaded = true;
+                        });
+                }
+            });
+
+            searchInput.addEventListener('input', function (e) {
+                var q = e.target.value.toLowerCase();
+                if (q.length < 2) {
+                    searchResults.classList.add('hidden');
+                    return;
+                }
+
+                var results = searchData.filter(function (item) {
+                    return item.title.toLowerCase().indexOf(q) !== -1 || item.description.toLowerCase().indexOf(q) !== -1;
+                }).slice(0, 8);
+
+                if (results.length > 0) {
+                    var html = '';
+                    results.forEach(function (item) {
+                        html += '<a href="' + item.url + '" class="search-result-item">';
+                        if (item.category_label) {
+                            html += '<span class="badge badge-accent" style="float:right;font-size:0.7em;">' + item.category_label + '</span>';
+                        }
+                        html += '<strong>' + item.title + '</strong>';
+                        if (item.description) {
+                            html += '<p class="text-xs text-muted truncate m-0">' + item.description + '</p>';
+                        }
+                        html += '</a>';
+                    });
+                    searchResults.innerHTML = html;
+                    searchResults.classList.remove('hidden');
+                } else {
+                    searchResults.innerHTML = '<div class="p-3 text-muted text-sm pb-0">No results found.</div>';
+                    searchResults.classList.remove('hidden');
+                }
+            });
+
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    searchResults.classList.add('hidden');
+                    searchInput.blur();
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+        }
     })();
 </script>
 {{end}}

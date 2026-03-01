@@ -44,53 +44,22 @@
             <aside class="profile-sidebar">
                 <div class="infobox">
                     <h3>{{.title}}</h3>
-                    {{if .type}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Type</span>
-                        <span class="infobox-value">{{.type}}</span>
-                    </div>
-                    {{end}}
-                    {{if .industry}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Industry</span>
-                        <span class="infobox-value">{{.industry}}</span>
-                    </div>
-                    {{end}}
-                    {{if .founded}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Founded</span>
-                        <span class="infobox-value">{{.founded}}</span>
-                    </div>
-                    {{end}}
-                    {{if .location}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Location</span>
-                        <span class="infobox-value">{{.location}}</span>
-                    </div>
-                    {{end}}
-                    {{if .website}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Website</span>
-                        <span class="infobox-value"><a href="{{.website}}" target="_blank"
-                                rel="noopener">{{.website}}</a></span>
-                    </div>
-                    {{end}}
-                    {{if .founders}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Founders</span>
-                        <span class="infobox-value">{{.founders}}</span>
-                    </div>
-                    {{end}}
-                    {{if .employees}}
-                    <div class="infobox-row">
-                        <span class="infobox-label">Employees</span>
-                        <span class="infobox-value">{{.employees}}</span>
-                    </div>
-                    {{end}}
                     {{if .born}}
                     <div class="infobox-row">
                         <span class="infobox-label">Born</span>
                         <span class="infobox-value">{{.born}}</span>
+                    </div>
+                    {{end}}
+                    {{if .died}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Died</span>
+                        <span class="infobox-value">{{.died}}</span>
+                    </div>
+                    {{end}}
+                    {{if .nationality}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Nationality</span>
+                        <span class="infobox-value">{{.nationality}}</span>
                     </div>
                     {{end}}
                     {{if .occupation}}
@@ -99,11 +68,29 @@
                         <span class="infobox-value">{{.occupation}}</span>
                     </div>
                     {{end}}
-                    {{if .github}}
+                    {{if .known_for}}
                     <div class="infobox-row">
-                        <span class="infobox-label">GitHub</span>
-                        <span class="infobox-value"><a href="https://github.com/{{.github}}" target="_blank"
-                                rel="noopener">{{.github}}</a></span>
+                        <span class="infobox-label">Known for</span>
+                        <span class="infobox-value">{{.known_for}}</span>
+                    </div>
+                    {{end}}
+                    {{if .education}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Education</span>
+                        <span class="infobox-value">{{.education}}</span>
+                    </div>
+                    {{end}}
+                    {{if .awards}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Awards</span>
+                        <span class="infobox-value">{{.awards}}</span>
+                    </div>
+                    {{end}}
+                    {{if .website}}
+                    <div class="infobox-row">
+                        <span class="infobox-label">Website</span>
+                        <span class="infobox-value"><a href="{{.website}}" target="_blank"
+                                rel="noopener">{{.website}}</a></span>
                     </div>
                     {{end}}
                 </div>

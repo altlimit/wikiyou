@@ -8,8 +8,16 @@
         "path": "/companies"
     },
     {
+        "name": "People",
+        "path": "/people"
+    },
+    {
         "name": "Apps",
         "path": "/apps"
+    },
+    {
+        "name": "Games",
+        "path": "/games"
     },
     {
         "name": "Websites",

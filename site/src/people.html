@@ -1,0 +1,40 @@
+---
+template: directory.html
+title: People
+description: "Biographies of notable individuals — inventors, creators, scientists, and public figures, contributed by
+the community."
+og_type: website
+---
+
+{{define "content"}}
+<div class="grid-3">
+    {{$items := sources "Path" "/people/*" | sort "Meta.title" "asc"}}
+    {{range paginate 12 $items}}
+    <a href="{{.Path}}" class="card card-hover" style="text-decoration:none">
+        <h3 style="font-size:1.1rem">{{.Meta.title}}</h3>
+        {{if .Meta.occupation}}
+        <span class="badge badge-accent mb-2">{{.Meta.occupation}}</span>
+        {{end}}
+        {{if .Meta.description}}
+        <p>{{.Meta.description}}</p>
+        {{end}}
+        {{if .Meta.born}}
+        <span class="card-meta">🎂 {{.Meta.born}}</span>
+        {{end}}
+    </a>
+    {{end}}
+</div>
+
+{{if gt .Source.TotalPages 1}}
+<div class="pagination mt-6">
+    {{range pages .Source}}
+    <a href="{{.Path}}" class="btn btn-sm {{if .Active}}btn-primary{{else}}btn-outline{{end}}">{{.Page}}</a>
+    {{end}}
+</div>
+{{end}}
+
+<div class="alert alert-info mt-6">
+    <p><strong>Want to add a person?</strong> Anyone can create a biography on WikiYou. Check out the <a
+            href="/contribute">contribution guide</a> to learn how to submit a new page via GitHub Pull Request.</p>
+</div>
+{{end}}

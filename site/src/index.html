@@ -54,20 +54,22 @@ og_type: website
             </a>
 
             <!-- People -->
-            <div class="card" style="opacity:0.6">
+            <a href="/people" class="card card-hover" style="text-decoration:none">
                 <div class="card-icon people">👤</div>
                 <h3>People</h3>
                 <p>Biographies of notable individuals, creators, and public figures.</p>
-                <span class="card-meta badge badge-accent">Coming soon</span>
-            </div>
+                {{$people := sources "Path" "/people/*"}}
+                <span class="card-meta">{{len $people}} articles</span>
+            </a>
 
             <!-- Games -->
-            <div class="card" style="opacity:0.6">
+            <a href="/games" class="card card-hover" style="text-decoration:none">
                 <div class="card-icon games">🎮</div>
                 <h3>Games</h3>
                 <p>Playable browser games, game reviews, and gaming history articles.</p>
-                <span class="card-meta badge badge-accent">Coming soon</span>
-            </div>
+                {{$games := sources "Path" "/games/*"}}
+                <span class="card-meta">{{len $games}} articles</span>
+            </a>
 
             <!-- Apps -->
             <a href="/apps" class="card card-hover" style="text-decoration:none">

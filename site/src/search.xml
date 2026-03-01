@@ -1,0 +1,19 @@
+---
+parse: text
+path: search.xml
+---
+{{- $site := data "site.json" -}}
+<?xml version="1.0" encoding="UTF-8"?>
+<search>
+{{range sources "Local" "**/src/**.html"}}
+{{- if and .Meta.title (not (.Local | contains "404.html")) -}}
+  <page>
+    <title>{{.Meta.title}}</title>
+    <description>{{.Meta.description}}</description>
+    <url>{{.Path}}</url>
+    <category>{{if .Meta.category}}{{.Meta.category}}{{end}}</category>
+    <category_label>{{if .Meta.category_label}}{{.Meta.category_label}}{{end}}</category_label>
+  </page>
+{{- end -}}
+{{- end -}}
+</search>

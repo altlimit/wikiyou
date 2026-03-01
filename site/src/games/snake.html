@@ -1,0 +1,202 @@
+---
+template: game.html
+title: Snake
+description: "The classic Snake game — eat food to grow longer, but don't hit the walls or yourself! Use arrow keys or
+WASD to control."
+category: games
+category_label: Games
+og_type: article
+---
+
+{{define "addHead"}}
+<style>
+    .game-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-4);
+    }
+
+    .game-canvas-container {
+        position: relative;
+        background: #1a1a2e;
+        border-radius: var(--radius-lg);
+        padding: var(--space-3);
+        box-shadow: var(--shadow-lg), 0 0 40px rgba(37, 99, 235, 0.15);
+    }
+
+    #snake-canvas {
+        display: block;
+        border-radius: var(--radius);
+    }
+
+    .game-hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 408px;
+        gap: var(--space-4);
+    }
+
+    .game-score {
+        font-size: var(--text-2xl);
+        font-weight: 700;
+        color: var(--color-accent);
+    }
+
+    .game-high-score {
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+    }
+
+    .game-controls {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .game-btn {
+        padding: var(--space-2) var(--space-4);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-bg-alt);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition);
+    }
+
+    .game-btn:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+    }
+
+    .game-btn-primary {
+        background: var(--color-accent);
+        color: #fff;
+        border-color: var(--color-accent);
+    }
+
+    .game-btn-primary:hover {
+        background: var(--color-link-hover);
+        color: #fff;
+    }
+
+    /* Mobile d-pad */
+    .mobile-dpad {
+        display: none;
+        margin-top: var(--space-4);
+    }
+
+    .dpad-row {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-2);
+    }
+
+    .dpad-btn {
+        width: 56px;
+        height: 56px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-bg-alt);
+        font-size: var(--text-xl);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all var(--transition);
+    }
+
+    .dpad-btn:active {
+        background: var(--color-accent);
+        color: #fff;
+        border-color: var(--color-accent);
+    }
+
+    .dpad-spacer {
+        width: 56px;
+        height: 56px;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-dpad {
+            display: block;
+        }
+    }
+
+    @media (max-width: 440px) {
+        .game-canvas-container {
+            padding: var(--space-2);
+        }
+
+        #snake-canvas {
+            width: 100%;
+            height: auto;
+        }
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<div class="game-wrapper">
+    <div class="game-hud">
+        <div>
+            <span class="game-score" id="score">0</span>
+            <span class="text-sm text-muted ml-2">points</span>
+        </div>
+        <div class="game-high-score">
+            Best: <span id="high-score">0</span>
+        </div>
+    </div>
+
+    <div class="game-canvas-container">
+        <canvas id="snake-canvas" width="400" height="400"></canvas>
+    </div>
+
+    <div class="game-controls">
+        <button class="game-btn game-btn-primary" id="start-btn">Start Game</button>
+        <button class="game-btn" id="pause-btn" disabled>Pause</button>
+    </div>
+
+    <div class="mobile-dpad">
+        <div class="dpad-row">
+            <div class="dpad-spacer"></div>
+            <button class="dpad-btn" data-dir="up">▲</button>
+            <div class="dpad-spacer"></div>
+        </div>
+        <div class="dpad-row">
+            <button class="dpad-btn" data-dir="left">◀</button>
+            <button class="dpad-btn" data-dir="down">▼</button>
+            <button class="dpad-btn" data-dir="right">▶</button>
+        </div>
+    </div>
+
+    <p class="text-sm text-muted text-center">Use arrow keys or WASD to move. Press Space to pause.</p>
+</div>
+
+<script src="/games/snake.js"></script>
+{{end}}
+
+{{define "game-info"}}
+<h2>How to Play</h2>
+<ul>
+    <li>Press <strong>Start Game</strong> or any arrow key to begin.</li>
+    <li>Use <strong>Arrow Keys</strong> or <strong>WASD</strong> to steer the snake.</li>
+    <li>Eat the red food pellets to grow longer and earn points.</li>
+    <li>Avoid hitting the walls or your own tail — that ends the game!</li>
+    <li>Press <strong>Space</strong> to pause and resume.</li>
+</ul>
+
+<h2>About Snake</h2>
+<p>
+    Snake is one of the most iconic video games of all time, with roots going back to the 1976 arcade game
+    <em>Blockade</em>. It became a worldwide phenomenon when it was pre-loaded on Nokia mobile phones starting in 1998.
+    The simple yet addictive gameplay — guiding a growing snake to eat food without colliding with itself — has made it
+    a beloved classic across generations.
+</p>
+{{end}}

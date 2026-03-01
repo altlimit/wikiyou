@@ -1,0 +1,35 @@
+---
+template: directory.html
+title: Games
+description: "Playable browser games on WikiYou — classic arcade games, puzzles, and more. All free to play, right in
+your browser."
+og_type: website
+---
+
+{{define "content"}}
+<div class="grid-3">
+    {{$items := sources "Path" "/games/*" | sort "Meta.title" "asc"}}
+    {{range paginate 12 $items}}
+    <a href="{{.Path}}" class="card card-hover" style="text-decoration:none">
+        <div class="card-icon games">🎮</div>
+        <h3 style="font-size:1.1rem">{{.Meta.title}}</h3>
+        {{if .Meta.description}}
+        <p>{{.Meta.description}}</p>
+        {{end}}
+    </a>
+    {{end}}
+</div>
+
+{{if gt .Source.TotalPages 1}}
+<div class="pagination mt-6">
+    {{range pages .Source}}
+    <a href="{{.Path}}" class="btn btn-sm {{if .Active}}btn-primary{{else}}btn-outline{{end}}">{{.Page}}</a>
+    {{end}}
+</div>
+{{end}}
+
+<div class="alert alert-info mt-6">
+    <p><strong>Have a game to share?</strong> You can contribute browser-based games to WikiYou. See
+        the <a href="/contribute">contribution guide</a> for how to submit your game via GitHub Pull Request.</p>
+</div>
+{{end}}
