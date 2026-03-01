@@ -1465,7 +1465,111 @@ tr:hover {
   margin-top: var(--space-5);
 }
 
-/* ---------- Form Elements (for tools) ---------- */
+/* ---------- Game Template ---------- */
+.game-layout {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+
+.game-hero {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  margin-bottom: var(--space-6);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border-radius: var(--radius-lg);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(37, 99, 235, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.game-hero-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-3);
+  animation: game-float 3s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes game-float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.game-hero h1 {
+  font-family: var(--font-serif);
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-2);
+  position: relative;
+  color: #fff;
+}
+
+.game-hero-desc {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: var(--text-lg);
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.game-stage {
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow), 0 0 60px rgba(37, 99, 235, 0.06);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.game-stage::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-lg);
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), transparent 50%, rgba(99, 102, 241, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.game-details {
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  line-height: 1.8;
+}
+
+.game-details h2 {
+  font-size: var(--text-2xl);
+  margin-top: var(--space-6);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.game-details h2:first-child {
+  margin-top: 0;
+}
+
 label {
   display: block;
   font-weight: 600;

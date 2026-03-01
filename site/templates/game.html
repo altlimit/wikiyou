@@ -9,7 +9,7 @@
     {{template "nav" .}}
 
     <main>
-        <div class="tool-container">
+        <div class="game-layout">
             {{if .category}}
             <ul class="breadcrumbs">
                 <li><a href="/">Home</a></li>
@@ -18,21 +18,21 @@
             </ul>
             {{end}}
 
-            <div class="tool-header">
+            <div class="game-hero">
+                <div class="game-hero-icon">🎮</div>
                 <h1>{{.title}}</h1>
                 {{if .description}}
-                <p>{{.description}}</p>
+                <p class="game-hero-desc">{{.description}}</p>
                 {{end}}
             </div>
 
-            <div class="tool-app">
+            <div class="game-stage">
                 {{template "content" .}}
             </div>
 
-            <div class="tool-info">
+            <div class="game-details">
                 {{template "game-info" .}}
             </div>
-
         </div>
     </main>
 
