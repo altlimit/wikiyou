@@ -1,0 +1,70 @@
+---
+template: profile.html
+title: PassedBox
+description: "PassedBox is a fully encrypted local file system with military-grade AES-256-GCM encryption, Shamir's
+Secret Sharing, and an optional dead man's switch."
+subtitle: Your Digital Fortress. Encrypted, Local, Secure.
+category: apps
+category_label: Apps
+type: Desktop Application
+industry: Cybersecurity / Privacy
+website: https://passedbox.com
+og_type: article
+---
+
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    PassedBox is a privacy-first, zero-knowledge encrypted file system that operates entirely locally. It replaces
+    traditional cloud-based legacy systems with a secure, portable <code>.pbx</code> vault file that can be stored on
+    any drive—USB, NAS, or local disk.
+</p>
+<p>
+    Built with military-grade AES-256-GCM encryption and Argon2id key derivation, PassedBox ensures that your files are
+    completely inaccessible to anyone without the master password or the requisite cryptographic shares. It combines the
+    familiarity of a standard file explorer with advanced cryptographic features like Shamir's Secret Sharing to
+    eliminate single points of failure.
+</p>
+
+<h2>Core Features</h2>
+<ul>
+    <li><strong>Zero-Knowledge Architecture:</strong> No accounts, no telemetry, and no cloud sync. The software
+        operates entirely locally, meaning PassedBox never sees your data or keys.</li>
+    <li><strong>Shamir's Secret Sharing:</strong> Master keys are split into multiple cryptographic shares (e.g., any 2
+        of 3 shares can reconstruct the key), enabling secure backup and recovery without relying on a single password.
+    </li>
+    <li><strong>Hardware-Locked Passwords:</strong> Optionally tie a vault's decryption capability to a specific hard
+        drive's serial number, rendering the vault useless if copied to another device.</li>
+    <li><strong>Built-in Media & Document Viewers:</strong> Preview images, watch videos, listen to audio, and read PDFs
+        directly within the encrypted vault. Decryption happens purely in memory.</li>
+    <li><strong>Monaco Code Editor:</strong> Edit text files and code securely inside the vault without ever exporting
+        them to the host os.</li>
+</ul>
+
+<h2>The Dead Man's Switch</h2>
+<p>
+    While PassedBox is fundamentally a local encryption tool, it offers an optional, privacy-preserving "Dead Man's
+    Switch" for digital legacy planning.
+</p>
+<p>
+    Instead of holding your files on a server, PassedBox stores only an <em>encrypted key share</em> remotely. This
+    share is released to trusted contacts only if a predefined trigger is met:
+</p>
+<ul>
+    <li><strong>Credit Expiration:</strong> The share is released when prepaid credits run out, encouraging active
+        renewal to keep the share held.</li>
+    <li><strong>Keep-Alive Check-In:</strong> Users must periodically confirm activity. If reminders are missed, the
+        share is released.</li>
+</ul>
+<p>
+    Once released, beneficiaries who possess the local vault file and another necessary key share can decrypt the vault
+    without needing the original master password.
+</p>
+
+<h2>Pricing</h2>
+<p>
+    The core PassedBox application is free to download and use with no account required. Optional features like the Dead
+    Man's Switch may involve separate pricing based on credits or subscription models. Visit their website for complete
+    details.
+</p>
+{{end}}
