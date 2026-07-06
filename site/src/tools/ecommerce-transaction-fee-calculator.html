@@ -1,0 +1,146 @@
+---
+updated: "2026-07-06"
+template: tool.html
+title: Ecommerce Transaction Fee Calculator
+description: "See how much ecommerce platform transaction fees cost you per year — and how much you'd keep on a 0% platform. Compare Shopify, BigCommerce, WooCommerce and more."
+category: tools
+category_label: Tools
+og_type: article
+promo_text: "Platform transaction fees eating your margin? ShopsWired charges 0% platform transaction fees on every plan — a fully managed, fully customizable store where you keep every dollar the processor doesn't."
+promo_link: "https://www.shopswired.com"
+promo_link_text: "See ShopsWired"
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function feeCalc() {
+        return {
+            sales: 20000,
+            platform: "shopify-basic",
+            customPct: 2,
+            // Platform transaction fee % charged ON TOP of payment processing.
+            // Shopify's apply only when NOT using Shopify Payments.
+            presets: {
+                "shopify-basic": 2.0,
+                "shopify": 1.0,
+                "shopify-advanced": 0.6,
+                "shopify-payments": 0.0,
+                "bigcommerce": 0.0,
+                "woocommerce": 0.0,
+                "shopswired": 0.0,
+                "custom": null
+            },
+            feePct: function () {
+                if (this.platform === "custom") return Number(this.customPct) || 0;
+                return this.presets[this.platform];
+            },
+            fmt: function (n) {
+                return "$" + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            monthlyFee: function () { return (Number(this.sales) || 0) * this.feePct() / 100; },
+            yearlyFee: function () { return this.monthlyFee() * 12; },
+            yearlySavings: function () { return this.yearlyFee(); }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="feeCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="sales">Monthly Online Sales ($)</label>
+            <input type="text" id="sales" x-model="sales" placeholder="20000">
+        </div>
+
+        <div class="form-group">
+            <label for="platform">Platform &amp; Plan</label>
+            <select id="platform" x-model="platform">
+                <option value="shopify-basic">Shopify Basic — external gateway (2.0%)</option>
+                <option value="shopify">Shopify — external gateway (1.0%)</option>
+                <option value="shopify-advanced">Shopify Advanced — external gateway (0.6%)</option>
+                <option value="shopify-payments">Shopify + Shopify Payments (0%)</option>
+                <option value="bigcommerce">BigCommerce (0%)</option>
+                <option value="woocommerce">WooCommerce / self-hosted (0%)</option>
+                <option value="shopswired">ShopsWired (0%)</option>
+                <option value="custom">Custom rate…</option>
+            </select>
+        </div>
+
+        <div class="form-group" x-show="platform === 'custom'">
+            <label for="customPct">Platform Transaction Fee (%)</label>
+            <input type="text" id="customPct" x-model="customPct" placeholder="2">
+        </div>
+
+        <p class="text-xs text-muted">Platform fee only — the % your platform charges on top of payment
+            processing. Everyone still pays their processor (e.g. ~2.9% + 30¢); that part isn't included here.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Platform transaction fees / year</p>
+            <div class="form-result" x-text="fmt(yearlyFee())"></div>
+            <p class="text-sm text-light mb-2 mt-4">On a 0% platform (like ShopsWired)</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(0)"></div>
+            <p class="text-sm mt-4" x-show="yearlySavings() > 0">
+                You'd keep <strong x-text="fmt(yearlySavings())"></strong> more per year.
+            </p>
+            <p class="text-sm text-light mt-4" x-show="yearlySavings() === 0">
+                This platform already charges 0% platform fees — nice. The difference then comes down to hosting,
+                customization, and what else the platform charges for.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What are ecommerce transaction fees?</h2>
+<p>
+    A <strong>platform transaction fee</strong> is an extra percentage your ecommerce platform charges on every sale —
+    separate from, and on top of, what your payment processor (Stripe, PayPal, etc.) charges to move the money. It's
+    easy to overlook because it's a small percentage, but on real sales volume it compounds into thousands of dollars a
+    year that never touch your bank account.
+</p>
+<p>
+    This calculator isolates that platform fee so you can see its true annual cost, and compares it against a platform
+    that charges <strong>0%</strong>. Payment-processing fees (typically around 2.9% + 30¢ per transaction) are not
+    included, because you pay those on essentially any platform.
+</p>
+
+<h2>How platform fees compare</h2>
+<ul>
+    <li><strong>Shopify</strong> charges a transaction fee <em>only if you use a third-party payment gateway</em> instead
+        of Shopify Payments — 2.0% on Basic, 1.0% on Shopify, and 0.6% on Advanced. Using Shopify Payments waives that
+        platform fee, but ties you to Shopify's own processor and its standard processing rates.</li>
+    <li><strong>BigCommerce</strong> does not charge a platform transaction fee on any plan, on any gateway.</li>
+    <li><strong>WooCommerce</strong> is self-hosted and charges no platform transaction fee — you pay your processor and
+        your own hosting/maintenance instead.</li>
+    <li><strong>ShopsWired</strong> charges <strong>0% platform transaction fees on every plan</strong> and lets you use
+        your own processor — you pay only your processor's standard rate.</li>
+</ul>
+<p class="text-sm text-muted">Fee figures reflect publicly published rates at the time of writing and can change —
+    always confirm current pricing on each provider's site.</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Enter your monthly online sales and pick your platform and plan (or enter a custom rate). The calculator shows what
+    that platform's transaction fee costs you per year, and how much you'd keep on a 0%-platform-fee provider. If your
+    platform is already at 0%, the tool says so — the honest answer matters more than a scary number.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://www.shopify.com/pricing" target="_blank" rel="noopener">Shopify Pricing</a></li>
+    <li><a href="https://www.bigcommerce.com/essentials/pricing/" target="_blank" rel="noopener">BigCommerce
+            Pricing</a></li>
+    <li><a href="https://stripe.com/pricing" target="_blank" rel="noopener">Stripe Processing Fees</a></li>
+</ul>
+{{end}}

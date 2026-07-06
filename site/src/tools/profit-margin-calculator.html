@@ -1,0 +1,196 @@
+---
+updated: "2026-07-06"
+template: tool.html
+title: Profit Margin Calculator
+description: "Calculate gross profit, profit margin %, and markup % from your cost and selling price — or solve for the price you need to hit a target margin."
+category: tools
+category_label: Tools
+og_type: article
+promo_text: "Running an online store? ShopsWired keeps more of every sale — 0% platform transaction fees and a fully managed, customizable storefront."
+promo_link: "https://www.shopswired.com"
+promo_link_text: "See ShopsWired"
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function marginCalc() {
+        return {
+            mode: "from-price",   // "from-price" or "target-margin"
+            cost: 40,
+            price: 100,
+            targetMargin: 60,
+
+            num: function (v) {
+                var n = Number(v);
+                return isFinite(n) ? n : 0;
+            },
+            fmt: function (n) {
+                if (!isFinite(n)) return "—";
+                return "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            pct: function (n) {
+                if (!isFinite(n)) return "—";
+                return n.toFixed(2) + "%";
+            },
+
+            // The selling price actually being used for the results.
+            effectivePrice: function () {
+                if (this.mode === "target-margin") {
+                    var m = this.num(this.targetMargin) / 100;
+                    if (m >= 1) return NaN;          // 100%+ margin is impossible
+                    return this.num(this.cost) / (1 - m);
+                }
+                return this.num(this.price);
+            },
+
+            grossProfit: function () {
+                var p = this.effectivePrice();
+                if (!isFinite(p)) return NaN;
+                return p - this.num(this.cost);
+            },
+            marginPct: function () {
+                var p = this.effectivePrice();
+                if (!isFinite(p) || p === 0) return NaN;   // avoid divide-by-zero
+                return (p - this.num(this.cost)) / p * 100;
+            },
+            markupPct: function () {
+                var c = this.num(this.cost);
+                if (c === 0) return NaN;                     // avoid divide-by-zero
+                return (this.effectivePrice() - c) / c * 100;
+            },
+            targetImpossible: function () {
+                return this.mode === "target-margin" && this.num(this.targetMargin) >= 100;
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="marginCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="mode">What do you want to do?</label>
+            <select id="mode" x-model="mode">
+                <option value="from-price">I know my cost &amp; price</option>
+                <option value="target-margin">Find the price for a target margin</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="cost">Cost per Unit ($)</label>
+            <input type="text" id="cost" x-model="cost" placeholder="40">
+        </div>
+
+        <div class="form-group" x-show="mode === 'from-price'">
+            <label for="price">Selling Price ($)</label>
+            <input type="text" id="price" x-model="price" placeholder="100">
+        </div>
+
+        <div class="form-group" x-show="mode === 'target-margin'">
+            <label for="targetMargin">Target Profit Margin (%)</label>
+            <input type="text" id="targetMargin" x-model="targetMargin" placeholder="60">
+        </div>
+
+        <p class="text-xs text-muted">Everything runs in your browser — nothing you type is sent anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4" x-show="!targetImpossible()">
+            <p class="text-sm text-light mb-2" x-show="mode === 'target-margin'">Required Selling Price</p>
+            <div class="form-result" x-show="mode === 'target-margin'"
+                style="color:var(--color-link)" x-text="fmt(effectivePrice())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Gross Profit</p>
+            <div class="form-result" x-text="fmt(grossProfit())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Profit Margin</p>
+            <div class="form-result" x-text="pct(marginPct())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Markup</p>
+            <div class="form-result" x-text="pct(markupPct())"></div>
+        </div>
+
+        <div class="text-center mb-4" x-show="targetImpossible()">
+            <p class="text-sm text-light">A profit margin of 100% or more is mathematically impossible —
+                margin can approach 100% but never reach it, because profit can never exceed the full
+                selling price. Try a target below 100%.</p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is profit margin?</h2>
+<p>
+    <strong>Profit margin</strong> tells you what share of each sale you actually keep after covering the cost of the
+    item. It is expressed as a percentage of the <em>selling price</em>. If you sell a product for $100 that cost you $40,
+    your gross profit is $60 and your profit margin is 60% — sixty cents of every dollar of revenue is profit before
+    other business expenses.
+</p>
+<p>
+    Margin is often confused with <strong>markup</strong>, but they answer different questions. Margin is profit as a
+    percentage of the <em>price</em>; markup is profit as a percentage of the <em>cost</em>. The same $60 profit on a $40
+    cost is a 60% margin but a 150% markup. Mixing the two up is one of the most common — and most expensive — pricing
+    mistakes small businesses make.
+</p>
+
+<h2>The formulas</h2>
+<p>This calculator uses three simple, exact arithmetic relationships:</p>
+<ul>
+    <li><strong>Gross Profit</strong> = Selling Price − Cost</li>
+    <li><strong>Profit Margin %</strong> = (Selling Price − Cost) ÷ Selling Price × 100</li>
+    <li><strong>Markup %</strong> = (Selling Price − Cost) ÷ Cost × 100</li>
+</ul>
+<p>
+    To work backwards from a target margin to the price you need to charge, rearrange the margin formula:
+    <strong>Selling Price = Cost ÷ (1 − Margin ÷ 100)</strong>. Notice that as the target margin approaches 100%, the
+    denominator approaches zero and the required price shoots toward infinity — which is why a margin of 100% or more is
+    impossible: your profit can never exceed the entire selling price.
+</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Choose a mode at the top. In <strong>“I know my cost &amp; price”</strong>, enter what a unit costs you and what you
+    sell it for, and the calculator instantly returns your gross profit per unit, your profit margin, and your markup. In
+    <strong>“Find the price for a target margin”</strong>, enter your cost and the margin you want to hit, and it solves
+    for the exact selling price that achieves it, along with the resulting profit and markup.
+</p>
+<p>
+    All values update as you type, and the tool guards against divide-by-zero cases — a $0 price or $0 cost simply shows
+    a dash rather than a misleading number.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose a unit costs you <strong>$40</strong> and you plan to sell it for <strong>$100</strong>. Your gross profit is
+    $100 − $40 = <strong>$60</strong>. Your profit margin is $60 ÷ $100 = <strong>60%</strong>, and your markup is $60 ÷
+    $40 = <strong>150%</strong>.
+</p>
+<p>
+    Now flip the question: that same $40 item, and you want a <strong>60% margin</strong>. Using Price = 40 ÷ (1 − 0.60)
+    = 40 ÷ 0.40 = <strong>$100</strong> — the same price, confirming the two calculations are consistent. If you instead
+    wanted a 75% margin, you'd need to charge 40 ÷ 0.25 = $160.
+</p>
+<p class="text-sm text-muted">
+    Gross margin covers only the direct cost of the goods. It does not account for shipping, payment-processing fees,
+    marketing, overhead, or taxes — subtract those separately to find your true net profit.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Profit_margin" target="_blank" rel="noopener">Profit Margin —
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Markup_(business)" target="_blank" rel="noopener">Markup —
+            Wikipedia</a></li>
+    <li><a href="https://www.investopedia.com/terms/g/grossmargin.asp" target="_blank" rel="noopener">Gross Margin —
+            Investopedia</a></li>
+</ul>
+{{end}}

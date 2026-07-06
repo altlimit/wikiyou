@@ -33,6 +33,18 @@
                 {{template "tool-info" .}}
             </div>
 
+            {{/* Subtle, relevant cross-promo. A tool sets promo_text/promo_link/
+                 promo_link_text in front-matter when there's a genuinely related
+                 AltLimit offering (e.g. an ecommerce calculator -> ShopsWired);
+                 otherwise this stays a neutral open-source note. */}}
+            <aside class="tool-cta">
+                {{if .promo_text}}
+                <p>{{.promo_text}}{{if .promo_link}} <a href="{{.promo_link}}" target="_blank" rel="noopener">{{if .promo_link_text}}{{.promo_link_text}}{{else}}Learn more{{end}} →</a>{{end}}</p>
+                {{else}}
+                <p>WikiYou tools are free and open source. <a href="/contribute">Add or improve a tool →</a></p>
+                {{end}}
+            </aside>
+
         </div>
     </main>
 
