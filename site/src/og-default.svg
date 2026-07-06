@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="WikiYou — The People's Encyclopedia">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1a2e"/>
+      <stop offset="1" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="12" fill="#2563eb"/>
+  <g transform="translate(100,150)">
+    <rect width="120" height="120" rx="24" fill="#2563eb"/>
+    <text x="60" y="94" font-family="Georgia, 'Times New Roman', serif" font-size="82" font-weight="700" fill="#ffffff" text-anchor="middle">W</text>
+  </g>
+  <text x="250" y="243" font-family="Georgia, 'Times New Roman', serif" font-size="96" font-weight="700" fill="#ffffff">WikiYou</text>
+  <text x="102" y="360" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="44" fill="#93c5fd">The People's Encyclopedia</text>
+  <text x="102" y="452" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="34" fill="#cbd5e1">Free, community-built, and powered by GitHub.</text>
+  <text x="102" y="500" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="34" fill="#cbd5e1">Companies · People · Apps · Games · Websites · Tools</text>
+  <text x="102" y="582" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="28" fill="#6b7280">wikiyou.org</text>
+</svg>

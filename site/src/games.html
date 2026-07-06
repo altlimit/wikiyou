@@ -1,11 +1,11 @@
 ---
+updated: "2026-03-01"
 template: directory.html
 title: Games
 description: "Playable browser games on WikiYou — classic arcade games, puzzles, and more. All free to play, right in
 your browser."
 og_type: website
 ---
-
 {{define "content"}}
 <div class="grid-3">
     {{$items := sources "RelPath" "games/*.html" | sort "Meta.title" "asc"}}

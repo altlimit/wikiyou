@@ -1,0 +1,9 @@
+---
+parse: text
+path: robots.txt
+---
+{{- $site := data "site.json" -}}
+User-agent: *
+Allow: /
+
+Sitemap: {{$site.url}}/sitemap.xml

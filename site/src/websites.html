@@ -1,10 +1,10 @@
 ---
+updated: "2026-02-28"
 template: directory.html
 title: Websites
 description: "Browse website profiles on WikiYou — blogs, recipe sites, communities, and other notable web properties."
 og_type: website
 ---
-
 {{define "content"}}
 <div class="grid-3">
     {{$items := sources "Path" "/websites/*" | sort "Meta.title" "asc"}}

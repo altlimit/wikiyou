@@ -9,7 +9,7 @@ path: sitemap.xml
 {{- if not (.Local | contains "404.html") -}}
   <url>
     <loc>{{$site.url}}{{.Path}}</loc>
-    <lastmod>{{$.Today}}</lastmod>
+    <lastmod>{{if .Meta.updated}}{{.Meta.updated}}{{else}}{{.LastMod}}{{end}}</lastmod>
   </url>
 {{- end -}}
 {{- end -}}

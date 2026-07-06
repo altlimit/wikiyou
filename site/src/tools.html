@@ -1,10 +1,10 @@
 ---
+updated: "2026-02-28"
 template: directory.html
 title: Tools
 description: "Interactive web tools and calculators on WikiYou — free to use, right in your browser."
 og_type: website
 ---
-
 {{define "content"}}
 <div class="grid-3">
     {{$items := sources "Path" "/tools/*" | sort "Meta.title" "asc"}}

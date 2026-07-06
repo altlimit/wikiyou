@@ -1,0 +1,24 @@
+---
+parse: text
+path: llms.txt
+---
+{{- $site := data "site.json" -}}
+# {{$site.title}}
+
+> {{$site.description}}
+
+{{$site.title}} is an open-source, community-built encyclopedia. Anyone can add or
+edit a page by opening a Pull Request on GitHub ({{$site.github}}). Content is
+static HTML generated with SiteGen. Pages are organized into categories: companies,
+people, apps, games, websites, and interactive tools.
+
+## Pages
+{{range sources "Local" "**/src/**.html"}}
+{{- if and .Meta.title (not (.Local | contains "404.html")) }}
+- [{{.Meta.title}}]({{$site.url}}{{.Path}}){{if .Meta.description}}: {{.Meta.description}}{{end}}
+{{- end -}}
+{{end}}
+
+## Contributing
+- Guide: {{$site.url}}/contribute
+- Source: {{$site.github}}

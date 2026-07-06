@@ -1,35 +1,63 @@
 {{define "head"}}
 {{$site := data "site.json"}}
+{{/* .Source.Path is the page's own URL path; .Path is EMPTY in this head/page
+     context (it only resolves inside a `range sources` loop), which is why the
+     canonical/og:url MUST use .Source.Path — using .Path collapsed every page's
+     canonical to the bare homepage. */}}
+{{$path := .Source.Path}}
+{{$canonical := printf "%s%s" $site.url $path}}
+{{$desc := .description}}{{if not $desc}}{{$desc = $site.description}}{{end}}
+{{$img := ""}}{{if .image}}{{$img = printf "%s%s" $site.url .image}}{{else if $site.default_image}}{{$img = printf "%s%s" $site.url $site.default_image}}{{end}}
+{{$largeCard := and $img (not ($img | contains ".svg"))}}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{if .title}}{{.title}} — {{end}}{{$site.title}}</title>
-<meta name="description" content="{{if .description}}{{.description}}{{else}}{{$site.description}}{{end}}">
+<meta name="description" content="{{$desc}}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="theme-color" content="#2563eb">
+
+<!-- Canonical -->
+<link rel="canonical" href="{{$canonical}}">
 
 <!-- Open Graph -->
 <meta property="og:type" content="{{if .og_type}}{{.og_type}}{{else}}website{{end}}">
 <meta property="og:title"
     content="{{if .title}}{{.title}} — {{$site.title}}{{else}}{{$site.title}} — {{$site.tagline}}{{end}}">
-<meta property="og:description" content="{{if .description}}{{.description}}{{else}}{{$site.description}}{{end}}">
-<meta property="og:url" content="{{$site.url}}{{.Path}}">
+<meta property="og:description" content="{{$desc}}">
+<meta property="og:url" content="{{$canonical}}">
 <meta property="og:site_name" content="{{$site.title}}">
-{{if .image}}
-<meta property="og:image" content="{{$site.url}}{{.image}}">{{end}}
+<meta property="og:locale" content="en_US">
+{{if $img}}<meta property="og:image" content="{{$img}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{if .title}}{{.title}}{{else}}{{$site.title}}{{end}}">{{end}}
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="{{if $largeCard}}summary_large_image{{else}}summary{{end}}">
 <meta name="twitter:title" content="{{if .title}}{{.title}} — {{$site.title}}{{else}}{{$site.title}}{{end}}">
-<meta name="twitter:description" content="{{if .description}}{{.description}}{{else}}{{$site.description}}{{end}}">
-{{if .image}}
-<meta name="twitter:image" content="{{$site.url}}{{.image}}">{{end}}
+<meta name="twitter:description" content="{{$desc}}">
+{{if $img}}<meta name="twitter:image" content="{{$img}}">{{end}}
 
-<!-- Canonical -->
-<link rel="canonical" href="{{$site.url}}{{.Path}}">
-
-<!-- Favicon -->
+<!-- Icons -->
 <link rel="icon" href="{{.BasePath}}favicon.ico">
 
 <!-- Styles -->
 <link rel="stylesheet" href="{{.BasePath}}css/styles.css?v={{.BuildID}}">
+
+{{/* Structured data. Values go through printf "%q" so quotes/backslashes stay
+     valid JSON even after the minifying build. Homepage gets WebSite +
+     Organization; content pages (those with a category) get a BreadcrumbList
+     plus a typed main entity keyed off the category. */}}
+{{if eq $path "/"}}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":{{printf "%q" $site.title}},"alternateName":{{printf "%q" $site.tagline}},"url":{{printf "%q" $site.url}},"description":{{printf "%q" $site.description}},"inLanguage":"en","publisher":{"@type":"Organization","name":{{printf "%q" $site.title}},"url":{{printf "%q" $site.url}}{{if $img}},"logo":{{printf "%q" $img}}{{end}},"sameAs":[{{printf "%q" $site.github}}]}}
+</script>
+{{else if .category}}
+{{$type := "Article"}}{{if eq .category "companies"}}{{$type = "Organization"}}{{else if eq .category "people"}}{{$type = "Person"}}{{else if or (eq .category "apps") (eq .category "tools")}}{{$type = "SoftwareApplication"}}{{else if eq .category "games"}}{{$type = "VideoGame"}}{{else if eq .category "websites"}}{{$type = "WebSite"}}{{end}}
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":{{printf "%q" $site.url}}},{"@type":"ListItem","position":2,"name":{{printf "%q" .category_label}},"item":{{printf "%q" (printf "%s/%s" $site.url .category)}}},{"@type":"ListItem","position":3,"name":{{printf "%q" .title}},"item":{{printf "%q" $canonical}}}]},{"@context":"https://schema.org","@type":{{printf "%q" $type}},"name":{{printf "%q" .title}},"description":{{printf "%q" $desc}},"url":{{printf "%q" $canonical}},"inLanguage":"en"{{if $img}},"image":{{printf "%q" $img}}{{end}},"isPartOf":{"@type":"WebSite","name":{{printf "%q" $site.title}},"url":{{printf "%q" $site.url}}}}]
+</script>
+{{end}}
 {{template "addHead" .}}
 {{end}}
 

@@ -1,11 +1,11 @@
 ---
+updated: "2026-03-01"
 template: directory.html
 title: People
 description: "Biographies of notable individuals — inventors, creators, scientists, and public figures, contributed by
 the community."
 og_type: website
 ---
-
 {{define "content"}}
 <div class="grid-3">
     {{$items := sources "Path" "/people/*" | sort "Meta.title" "asc"}}

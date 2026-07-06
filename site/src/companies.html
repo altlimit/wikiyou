@@ -1,11 +1,11 @@
 ---
+updated: "2026-02-28"
 template: directory.html
 title: Companies
 description: "Browse company profiles on WikiYou — from startups to established businesses, contributed by the
 community."
 og_type: website
 ---
-
 {{define "content"}}
 <div class="grid-3">
     {{$items := sources "Path" "/companies/*" | sort "Meta.title" "asc"}}

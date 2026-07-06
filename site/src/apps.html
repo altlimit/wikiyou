@@ -1,10 +1,10 @@
 ---
+updated: "2026-02-28"
 template: directory.html
 title: Apps
 description: "Browse web applications and software platforms on WikiYou — SaaS products, tools, and digital services."
 og_type: website
 ---
-
 {{define "content"}}
 <div class="grid-3">
     {{$items := sources "Path" "/apps/*" | sort "Meta.title" "asc"}}
