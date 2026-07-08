@@ -1,0 +1,229 @@
+---
+updated: "2026-07-08"
+template: tool.html
+title: Percentage Calculator
+description: "Work out percentages every way: X percent of Y, what percent X is of Y, and percentage increase or decrease. Fast, free, and 100% in your browser."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function pctCalc() {
+        return {
+            mode: "of",
+            // Mode 1: what is X% of Y
+            ofPct: 20,
+            ofBase: 150,
+            // Mode 2: X is what % of Y
+            partVal: 30,
+            wholeVal: 150,
+            // Mode 3: % change from A to B
+            fromVal: 100,
+            toVal: 125,
+            num: function (v) {
+                var n = Number(v);
+                return isFinite(n) ? n : 0;
+            },
+            fmt: function (n) {
+                if (!isFinite(n)) return "—";
+                // Trim to at most 4 decimals, drop trailing zeros, add thousands separators.
+                var rounded = Math.round(n * 10000) / 10000;
+                var parts = String(rounded).split(".");
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return parts.join(".");
+            },
+            // Mode 1 result: X% of Y
+            ofResult: function () {
+                return this.num(this.ofBase) * this.num(this.ofPct) / 100;
+            },
+            // Mode 2 result: X is what % of Y
+            percentResult: function () {
+                var whole = this.num(this.wholeVal);
+                if (whole === 0) return null;
+                return this.num(this.partVal) / whole * 100;
+            },
+            // Mode 3 result: % change from A to B
+            changeResult: function () {
+                var from = this.num(this.fromVal);
+                if (from === 0) return null;
+                return (this.num(this.toVal) - from) / Math.abs(from) * 100;
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="pctCalc()" style="margin:0" @submit.prevent>
+    <div class="form-group">
+        <label for="mode">What do you want to work out?</label>
+        <select id="mode" x-model="mode">
+            <option value="of">What is X% of Y?</option>
+            <option value="percent">X is what percent of Y?</option>
+            <option value="change">Percentage change from A to B</option>
+        </select>
+    </div>
+
+    <!-- Mode 1: What is X% of Y -->
+    <div x-show="mode === 'of'" class="grid-2">
+        <div>
+            <div class="form-group">
+                <label for="ofPct">Percentage (%)</label>
+                <input type="text" inputmode="decimal" id="ofPct" x-model="ofPct" placeholder="20">
+            </div>
+            <div class="form-group">
+                <label for="ofBase">Of this value</label>
+                <input type="text" inputmode="decimal" id="ofBase" x-model="ofBase" placeholder="150">
+            </div>
+        </div>
+        <div class="flex flex-col" style="justify-content:center">
+            <div class="text-center mb-4">
+                <p class="text-sm text-light mb-2">
+                    <span x-text="fmt(num(ofPct))"></span>% of <span x-text="fmt(num(ofBase))"></span> is
+                </p>
+                <div class="form-result" x-text="fmt(ofResult())"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode 2: X is what percent of Y -->
+    <div x-show="mode === 'percent'" class="grid-2">
+        <div>
+            <div class="form-group">
+                <label for="partVal">This value</label>
+                <input type="text" inputmode="decimal" id="partVal" x-model="partVal" placeholder="30">
+            </div>
+            <div class="form-group">
+                <label for="wholeVal">Is what percent of</label>
+                <input type="text" inputmode="decimal" id="wholeVal" x-model="wholeVal" placeholder="150">
+            </div>
+        </div>
+        <div class="flex flex-col" style="justify-content:center">
+            <div class="text-center mb-4">
+                <p class="text-sm text-light mb-2">
+                    <span x-text="fmt(num(partVal))"></span> is this percent of <span x-text="fmt(num(wholeVal))"></span>
+                </p>
+                <div class="form-result" x-show="percentResult() !== null"
+                    x-text="percentResult() !== null ? fmt(percentResult()) + '%' : ''"></div>
+                <div class="form-result" x-show="percentResult() === null">—</div>
+                <p class="text-xs text-muted mt-2" x-show="percentResult() === null">
+                    Enter a value greater than zero to divide by.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode 3: Percentage change from A to B -->
+    <div x-show="mode === 'change'" class="grid-2">
+        <div>
+            <div class="form-group">
+                <label for="fromVal">Original value (A)</label>
+                <input type="text" inputmode="decimal" id="fromVal" x-model="fromVal" placeholder="100">
+            </div>
+            <div class="form-group">
+                <label for="toVal">New value (B)</label>
+                <input type="text" inputmode="decimal" id="toVal" x-model="toVal" placeholder="125">
+            </div>
+        </div>
+        <div class="flex flex-col" style="justify-content:center">
+            <div class="text-center mb-4">
+                <p class="text-sm text-light mb-2">
+                    Change from <span x-text="fmt(num(fromVal))"></span> to <span x-text="fmt(num(toVal))"></span>
+                </p>
+                <div class="form-result" x-show="changeResult() !== null"
+                    x-text="changeResult() !== null ? (changeResult() >= 0 ? '+' : '') + fmt(changeResult()) + '%' : ''"></div>
+                <div class="form-result" x-show="changeResult() === null">—</div>
+                <p class="text-sm mt-2" x-show="changeResult() !== null && changeResult() > 0">An increase.</p>
+                <p class="text-sm mt-2" x-show="changeResult() !== null && changeResult() < 0">A decrease.</p>
+                <p class="text-sm text-light mt-2" x-show="changeResult() !== null && changeResult() === 0">No change.</p>
+                <p class="text-xs text-muted mt-2" x-show="changeResult() === null">
+                    The original value can't be zero — percentage change is undefined from zero.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-xs text-muted mt-4">Every calculation runs entirely in your browser — nothing you type is sent
+        anywhere.</p>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this percentage calculator does</h2>
+<p>
+    A percentage is simply a number expressed as a fraction of 100 — the word comes from the Latin <em>per centum</em>,
+    meaning "by the hundred." This calculator covers the three questions people actually ask about percentages, so you
+    don't have to remember which formula goes where:
+</p>
+<ul>
+    <li><strong>What is X% of Y?</strong> — find a percentage of a number (e.g. 20% of 150).</li>
+    <li><strong>X is what percent of Y?</strong> — express one number as a percentage of another (e.g. 30 out of 150).</li>
+    <li><strong>Percentage change from A to B</strong> — measure an increase or decrease between two values (e.g. a price
+        going from 100 to 125).</li>
+</ul>
+<p>
+    Pick a mode from the dropdown, type your two numbers, and the answer updates instantly. There is no "calculate"
+    button to press and nothing to submit.
+</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Choose the calculation you need from the menu at the top. Each mode shows two input boxes with plain-language labels
+    so you always know which number goes where. Decimal values are fine (try <strong>12.5</strong> or
+    <strong>0.75</strong>), and negative numbers work too for percentage-change calculations. The result restates your
+    inputs above the answer so you can double-check that you entered them the right way round.
+</p>
+
+<h2>The formulas behind each mode</h2>
+<p>All three modes rest on the same idea — a part divided by a whole, scaled by 100.</p>
+<ul>
+    <li><strong>X% of Y:</strong> result = Y &times; (X &divide; 100). For example, 20% of 150 = 150 &times; 0.20 =
+        <strong>30</strong>.</li>
+    <li><strong>X is what percent of Y:</strong> result = (X &divide; Y) &times; 100. For example, 30 out of 150 = (30
+        &divide; 150) &times; 100 = <strong>20%</strong>.</li>
+    <li><strong>Percentage change from A to B:</strong> result = ((B &minus; A) &divide; |A|) &times; 100. A positive
+        result is an increase; a negative result is a decrease. For example, going from 100 to 125 = ((125 &minus; 100)
+        &divide; 100) &times; 100 = <strong>+25%</strong>.</li>
+</ul>
+<p>
+    Percentage change divides by the <em>original</em> value, not the new one, which is why the same absolute jump can
+    give different percentages depending on your starting point. Note also that a 25% increase followed by a 25% decrease
+    does not return you to where you started (100 &rarr; 125 &rarr; 93.75), because each percentage is taken from a
+    different base.
+</p>
+
+<h2>Worked example: a discount</h2>
+<p>
+    Suppose a jacket normally costs $80 and is marked "25% off." Using the first mode, 25% of 80 is $20, so the discount
+    saves you $20 and you pay $60. If instead you only knew the old and new prices — $80 down to $60 — the third mode
+    confirms the change: (60 &minus; 80) &divide; 80 &times; 100 = <strong>&minus;25%</strong>, a 25% decrease. And if
+    you wanted to know what fraction of the original price you actually paid, the second mode gives 60 out of 80 =
+    <strong>75%</strong>.
+</p>
+
+<h2>A note on accuracy</h2>
+<p>
+    Results are rounded to at most four decimal places for readability, so a repeating decimal such as 1 out of 3 shows
+    as 33.3333% rather than the exact value. Divide-by-zero cases — asking what percent a number is of zero, or the
+    percentage change from an original value of zero — are mathematically undefined, and the calculator says so instead
+    of showing a misleading number.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Percentage" target="_blank" rel="noopener">Percentage — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Relative_change" target="_blank" rel="noopener">Relative change and
+            difference — Wikipedia</a></li>
+    <li><a href="https://www.mathsisfun.com/percentage.html" target="_blank" rel="noopener">Percentage — Math is
+            Fun</a></li>
+</ul>
+{{end}}
