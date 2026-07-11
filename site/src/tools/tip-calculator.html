@@ -1,0 +1,160 @@
+---
+updated: "2026-07-11"
+template: tool.html
+title: Tip Calculator
+description: Calculate the tip and total for any bill, then split it evenly across any number of people. Instant, private, and entirely in your browser.
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function tipCalc() {
+        return {
+            bill: 50,
+            tipPct: 18,
+            people: 2,
+            billNum: function () { return Math.max(0, Number(this.bill) || 0); },
+            tipPctNum: function () { return Math.max(0, Number(this.tipPct) || 0); },
+            // Guard people >= 1 so we never divide by zero.
+            peopleNum: function () {
+                var p = Math.floor(Number(this.people) || 0);
+                return p < 1 ? 1 : p;
+            },
+            setTip: function (v) { this.tipPct = v; },
+            tipAmount: function () { return this.billNum() * this.tipPctNum() / 100; },
+            total: function () { return this.billNum() + this.tipAmount(); },
+            perPerson: function () { return this.total() / this.peopleNum(); },
+            tipPerPerson: function () { return this.tipAmount() / this.peopleNum(); },
+            fmt: function (n) {
+                return "$" + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="tipCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="bill">Bill Amount ($)</label>
+            <input type="text" id="bill" x-model="bill" placeholder="50">
+        </div>
+
+        <div class="form-group">
+            <label for="tipPct">Tip (%)</label>
+            <input type="text" id="tipPct" x-model="tipPct" placeholder="18">
+            <div class="flex mt-2" style="gap:0.5rem;flex-wrap:wrap">
+                <button type="button" class="text-sm" style="cursor:pointer" @click="setTip(10)">10%</button>
+                <button type="button" class="text-sm" style="cursor:pointer" @click="setTip(15)">15%</button>
+                <button type="button" class="text-sm" style="cursor:pointer" @click="setTip(18)">18%</button>
+                <button type="button" class="text-sm" style="cursor:pointer" @click="setTip(20)">20%</button>
+                <button type="button" class="text-sm" style="cursor:pointer" @click="setTip(25)">25%</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="people">Number of People</label>
+            <input type="text" id="people" x-model="people" placeholder="2">
+            <p class="text-xs text-muted mt-2">Splitting evenly across at least one person.</p>
+        </div>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Tip Amount</p>
+            <div class="form-result" x-text="fmt(tipAmount())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Total (Bill + Tip)</p>
+            <div class="form-result" x-text="fmt(total())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4" x-show="peopleNum() > 1">Each Person Pays</p>
+            <div class="form-result" style="color:var(--color-link)" x-show="peopleNum() > 1"
+                x-text="fmt(perPerson())"></div>
+            <p class="text-sm text-light mt-2" x-show="peopleNum() > 1">
+                (includes <strong x-text="fmt(tipPerPerson())"></strong> of tip each)
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this tip calculator does</h2>
+<p>
+    A tip calculator takes the awkward mental math out of the end of a meal. Enter your bill amount, choose how generous
+    a tip you'd like to leave, and — if you're dining with friends — say how many people are sharing the bill. In
+    return you instantly see three numbers: the <strong>tip amount</strong>, the <strong>total</strong> (bill plus tip),
+    and each person's <strong>per-person share</strong>. Everything updates live as you type, and every calculation
+    happens entirely inside your browser — nothing you enter is sent anywhere or stored.
+</p>
+
+<h2>How to use it</h2>
+<ul>
+    <li><strong>Bill amount</strong> — type the pre-tip total from your check or receipt.</li>
+    <li><strong>Tip percentage</strong> — type any percentage, or tap one of the quick buttons (10%, 15%, 18%, 20%,
+        25%). In the United States, a tip of 15–20% of the pre-tax bill is customary for sit-down table service.</li>
+    <li><strong>Number of people</strong> — enter how many people are splitting the check. If you leave it at one, the
+        per-person line simply doesn't appear. The tool always assumes at least one person, so you'll never see a
+        divide-by-zero error.</li>
+</ul>
+<p>
+    The result panel shows the tip, the grand total, and — when more than one person is splitting — what each person
+    owes, including how much of that is their portion of the tip.
+</p>
+
+<h2>The formula</h2>
+<p>
+    The arithmetic behind a tip calculator is refreshingly simple:
+</p>
+<ul>
+    <li><strong>Tip = Bill &times; (Tip% &divide; 100)</strong></li>
+    <li><strong>Total = Bill + Tip</strong></li>
+    <li><strong>Per person = Total &divide; Number of people</strong></li>
+</ul>
+<p>
+    Some people prefer to tip on the pre-tax subtotal, while others tip on the post-tax total — either is acceptable,
+    and the difference is usually small. Because you type in the bill figure yourself, you're free to use whichever
+    base you prefer.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose your bill comes to <strong>$50.00</strong>, you'd like to leave an <strong>18%</strong> tip, and there are
+    <strong>2</strong> of you splitting the check evenly:
+</p>
+<ul>
+    <li>Tip = $50.00 &times; 0.18 = <strong>$9.00</strong></li>
+    <li>Total = $50.00 + $9.00 = <strong>$59.00</strong></li>
+    <li>Each person = $59.00 &divide; 2 = <strong>$29.50</strong> (of which $4.50 is tip)</li>
+</ul>
+<p>
+    Bump the tip up to 20% and the tip becomes $10.00, the total $60.00, and each person's share $30.00 — a quick way
+    to sanity-check what rounding to a "nice number" actually costs.
+</p>
+
+<h2>A note on tipping customs</h2>
+<p>
+    Tipping norms vary widely around the world. In the U.S. and Canada, tipping 15–20% at restaurants is expected and
+    forms a meaningful part of service workers' income. In much of Europe, a service charge is often already included
+    and a small round-up is plenty. In parts of Asia, tipping can be uncommon or even discouraged. When in doubt,
+    check the receipt for an existing "service charge" or "gratuity" line so you don't accidentally tip twice.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Gratuity" target="_blank" rel="noopener">Gratuity (tipping) —
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Tips_around_the_world" target="_blank" rel="noopener">Tipping customs
+            around the world — Wikipedia</a></li>
+</ul>
+{{end}}
