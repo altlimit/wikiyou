@@ -1,0 +1,170 @@
+---
+updated: "2026-07-15"
+template: tool.html
+title: Break-Even Point Calculator
+description: "Find how many units you must sell to cover costs, from fixed costs, price per unit, and variable cost per unit. See break-even units and revenue instantly."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function breakEven() {
+        return {
+            fixedCosts: 10000,
+            price: 25,
+            variableCost: 15,
+            fmt: function (n) {
+                return "$" + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            fmtNum: function (n) {
+                return Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            margin: function () {
+                return (Number(this.price) || 0) - (Number(this.variableCost) || 0);
+            },
+            // Contribution margin must be positive, otherwise no volume ever covers fixed costs.
+            valid: function () {
+                return this.margin() > 0;
+            },
+            breakEvenUnits: function () {
+                if (!this.valid()) return 0;
+                return (Number(this.fixedCosts) || 0) / this.margin();
+            },
+            breakEvenRevenue: function () {
+                return this.breakEvenUnits() * (Number(this.price) || 0);
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="breakEven()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="fixedCosts">Fixed Costs ($)</label>
+            <input type="text" id="fixedCosts" x-model="fixedCosts" placeholder="10000">
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price per Unit ($)</label>
+            <input type="text" id="price" x-model="price" placeholder="25">
+        </div>
+
+        <div class="form-group">
+            <label for="variableCost">Variable Cost per Unit ($)</label>
+            <input type="text" id="variableCost" x-model="variableCost" placeholder="15">
+        </div>
+
+        <p class="text-xs text-muted">Fixed costs are expenses that don't change with volume (rent, salaries,
+            insurance). Variable cost is what each additional unit costs to make or deliver.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4" x-show="valid()">
+            <p class="text-sm text-light mb-2">Break-even units</p>
+            <div class="form-result" x-text="fmtNum(breakEvenUnits())"></div>
+            <p class="text-sm text-light mb-2 mt-4">Break-even revenue</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(breakEvenRevenue())"></div>
+            <p class="text-sm mt-4">
+                Contribution margin per unit: <strong x-text="fmt(margin())"></strong>
+            </p>
+        </div>
+        <div class="text-center mb-4" x-show="!valid()">
+            <p class="text-sm text-light mb-2">Break-even point</p>
+            <div class="form-result" style="color:var(--color-muted)">—</div>
+            <p class="text-sm text-muted mt-4">
+                Price per unit must be greater than variable cost per unit. Otherwise every sale loses money and no
+                sales volume can ever cover your fixed costs.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is the break-even point?</h2>
+<p>
+    The <strong>break-even point</strong> is the level of sales at which total revenue exactly equals total costs — you
+    make neither a profit nor a loss. Below it, you're losing money on the business; above it, every additional sale
+    contributes to profit. Knowing this number tells you the minimum you must sell for a product, price, or venture to
+    be viable, which is why it's one of the first calculations in any business plan or pricing decision.
+</p>
+<p>
+    This calculator finds break-even in both <strong>units</strong> (how many you must sell) and <strong>revenue</strong>
+    (the dollar sales those units represent), along with the <strong>contribution margin</strong> that drives the whole
+    result.
+</p>
+
+<h2>The formula</h2>
+<p>
+    Break-even in units is fixed costs divided by the contribution margin per unit:
+</p>
+<p>
+    <strong>Break-even units = Fixed Costs &divide; (Price per Unit &minus; Variable Cost per Unit)</strong>
+</p>
+<ul>
+    <li><strong>Fixed Costs</strong> — expenses that stay the same regardless of how much you sell (rent, salaries,
+        software, insurance).</li>
+    <li><strong>Price per Unit</strong> — what a customer pays for one unit.</li>
+    <li><strong>Variable Cost per Unit</strong> — the cost that grows with each unit sold (materials, packaging,
+        per-unit shipping, payment processing).</li>
+    <li><strong>Contribution Margin</strong> — price minus variable cost. This is how much each unit "contributes"
+        toward covering fixed costs and, once those are covered, toward profit.</li>
+</ul>
+<p>
+    Break-even revenue is simply the break-even units multiplied by the price per unit. If the contribution margin is
+    zero or negative — that is, price is less than or equal to variable cost — there is no break-even point, because no
+    amount of volume can cover the fixed costs. The calculator guards against this and tells you rather than showing a
+    meaningless number.
+</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Enter your total fixed costs, the price you charge per unit, and the variable cost of producing or delivering one
+    unit. The calculator instantly shows how many units you must sell to break even, the revenue that represents, and
+    your contribution margin per unit. Everything is computed in your browser — none of your figures are sent anywhere.
+</p>
+<p>
+    Try adjusting the price: a higher price raises the contribution margin and lowers the number of units you need to
+    sell, while a higher variable cost does the opposite. This is a quick way to test pricing scenarios before
+    committing.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose you run a small print shop with <strong>$10,000</strong> in monthly fixed costs (rent, equipment lease, and
+    a part-time employee). You sell custom posters for <strong>$25</strong> each, and each poster costs
+    <strong>$15</strong> in paper, ink, and packaging.
+</p>
+<ul>
+    <li>Contribution margin = $25 &minus; $15 = <strong>$10 per poster</strong></li>
+    <li>Break-even units = $10,000 &divide; $10 = <strong>1,000 posters</strong></li>
+    <li>Break-even revenue = 1,000 &times; $25 = <strong>$25,000</strong></li>
+</ul>
+<p>
+    So you must sell 1,000 posters — generating $25,000 in revenue — each month just to cover costs. Poster number
+    1,001 is where profit begins, adding $10 for each one after that. If you could raise the price to $30 while keeping
+    costs the same, the margin jumps to $15 and break-even drops to about 667 posters, showing how sensitive the result
+    is to price.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Break-even_(economics)" target="_blank" rel="noopener">Break-even
+            (economics) — Wikipedia</a></li>
+    <li><a href="https://www.investopedia.com/terms/b/breakevenpoint.asp" target="_blank" rel="noopener">Break-Even
+            Point — Investopedia</a></li>
+    <li><a href="https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs" target="_blank"
+            rel="noopener">Calculate Your Startup Costs — U.S. Small Business Administration</a></li>
+</ul>
+{{end}}
