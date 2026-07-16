@@ -1,0 +1,217 @@
+---
+updated: "2026-07-16"
+template: tool.html
+title: BMI Calculator
+description: "Calculate your Body Mass Index from height and weight, in metric or imperial units, and see your WHO weight category instantly."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function bmiCalc() {
+        return {
+            units: "metric",
+            // metric inputs
+            heightCm: 170,
+            weightKg: 70,
+            // imperial inputs
+            heightFt: 5,
+            heightIn: 8,
+            weightLb: 154,
+            // Height in metres, or 0 if the input is empty/invalid.
+            heightM: function () {
+                if (this.units === "metric") {
+                    return (Number(this.heightCm) || 0) / 100;
+                }
+                var totalIn = (Number(this.heightFt) || 0) * 12 + (Number(this.heightIn) || 0);
+                return totalIn * 0.0254;
+            },
+            // Weight in kilograms, or 0 if the input is empty/invalid.
+            weightKgVal: function () {
+                if (this.units === "metric") {
+                    return Number(this.weightKg) || 0;
+                }
+                return (Number(this.weightLb) || 0) * 0.45359237;
+            },
+            bmi: function () {
+                var h = this.heightM();
+                var w = this.weightKgVal();
+                if (h <= 0 || w <= 0) return null;
+                return w / (h * h);
+            },
+            bmiText: function () {
+                var b = this.bmi();
+                if (b === null) return "—";
+                return b.toFixed(1);
+            },
+            category: function () {
+                var b = this.bmi();
+                if (b === null) return "Enter your height and weight";
+                if (b < 18.5) return "Underweight";
+                if (b < 25) return "Normal weight";
+                if (b < 30) return "Overweight";
+                return "Obese";
+            },
+            categoryColor: function () {
+                var b = this.bmi();
+                if (b === null) return "var(--color-text-light)";
+                if (b < 18.5) return "#2563eb";
+                if (b < 25) return "#16a34a";
+                if (b < 30) return "#d97706";
+                return "#dc2626";
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="bmiCalc()" class="grid-2" style="margin:0" onsubmit="return false">
+    <div>
+        <div class="form-group">
+            <label for="units">Units</label>
+            <select id="units" x-model="units">
+                <option value="metric">Metric (cm, kg)</option>
+                <option value="imperial">Imperial (ft/in, lb)</option>
+            </select>
+        </div>
+
+        <!-- Metric inputs -->
+        <template x-if="units === 'metric'">
+            <div>
+                <div class="form-group">
+                    <label for="heightCm">Height (cm)</label>
+                    <input type="number" id="heightCm" x-model="heightCm" min="0" step="0.1" placeholder="170">
+                </div>
+                <div class="form-group">
+                    <label for="weightKg">Weight (kg)</label>
+                    <input type="number" id="weightKg" x-model="weightKg" min="0" step="0.1" placeholder="70">
+                </div>
+            </div>
+        </template>
+
+        <!-- Imperial inputs -->
+        <template x-if="units === 'imperial'">
+            <div>
+                <div class="grid-2" style="gap:1rem">
+                    <div class="form-group">
+                        <label for="heightFt">Height (ft)</label>
+                        <input type="number" id="heightFt" x-model="heightFt" min="0" step="1" placeholder="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="heightIn">Height (in)</label>
+                        <input type="number" id="heightIn" x-model="heightIn" min="0" step="0.1" placeholder="8">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="weightLb">Weight (lb)</label>
+                    <input type="number" id="weightLb" x-model="weightLb" min="0" step="0.1" placeholder="154">
+                </div>
+            </div>
+        </template>
+
+        <p class="text-xs text-muted">Everything is calculated in your browser — nothing you enter is sent anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Your BMI</p>
+            <div class="form-result" x-text="bmiText()"></div>
+            <p class="text-sm mt-4" x-show="bmi() !== null">
+                Category: <strong x-text="category()" :style="'color:' + categoryColor()"></strong>
+            </p>
+            <p class="text-sm text-light mt-4" x-show="bmi() === null" x-text="category()"></p>
+        </div>
+    </div>
+</form>
+
+<p class="text-sm text-muted mt-4 text-center">
+    BMI is a rough screening measure, not a diagnosis. It doesn't account for muscle mass, body composition, age,
+    or sex. Talk to a healthcare professional to interpret your result.
+</p>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is BMI?</h2>
+<p>
+    <strong>Body Mass Index (BMI)</strong> is a simple number that relates a person's weight to their height. It was
+    developed in the 1830s by the Belgian mathematician Adolphe Quetelet and is used worldwide as a quick, low-cost way
+    to screen adults for weight categories that may be associated with health risks. Because it needs only two easily
+    measured values — height and weight — it's a convenient first indicator, but it is a <em>screening</em> tool, not a
+    diagnosis of health or body fatness.
+</p>
+
+<h2>The BMI formula</h2>
+<p>
+    In metric units, BMI is your weight in kilograms divided by the square of your height in metres:
+</p>
+<p><strong>BMI = weight (kg) &divide; height (m)<sup>2</sup></strong></p>
+<p>
+    In imperial units, the same relationship uses a conversion factor of 703:
+</p>
+<p><strong>BMI = 703 &times; weight (lb) &divide; height (in)<sup>2</sup></strong></p>
+<p>
+    This calculator converts your imperial entries (feet, inches, and pounds) to metric internally, so both unit systems
+    give the same result for the same body.
+</p>
+
+<h2>WHO weight categories for adults</h2>
+<p>
+    The World Health Organization classifies adult BMI into four broad categories:
+</p>
+<ul>
+    <li><strong>Underweight</strong> — BMI below 18.5</li>
+    <li><strong>Normal weight</strong> — BMI from 18.5 to 24.9</li>
+    <li><strong>Overweight</strong> — BMI from 25 to 29.9</li>
+    <li><strong>Obese</strong> — BMI of 30 or higher</li>
+</ul>
+<p>
+    These thresholds apply to most adults aged 20 and over. They are not appropriate for children and teenagers, who are
+    assessed against age- and sex-specific percentile charts, nor are they adjusted for pregnancy. Some health bodies
+    also use lower cut-off points for people of South Asian and certain other ancestries, where health risks can appear
+    at a lower BMI.
+</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Pick your unit system, then enter your height and weight. If you use imperial units, split your height into feet and
+    inches. Your BMI and its WHO category update instantly as you type. If a field is empty or zero, the calculator
+    simply waits rather than showing an error — so you'll never see an <code>NaN</code> or "Infinity" result.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose you are 170&nbsp;cm tall and weigh 70&nbsp;kg. Converting height to metres gives 1.70&nbsp;m, and 1.70
+    squared is 2.89. Dividing 70 by 2.89 gives a BMI of about <strong>24.2</strong>, which falls in the
+    <strong>Normal weight</strong> range. The same person entered in imperial units — roughly 5&nbsp;ft 7&nbsp;in and
+    154&nbsp;lb — produces the same BMI, because the tool converts the values before calculating.
+</p>
+
+<h2>Important limitations</h2>
+<p>
+    BMI treats all mass the same, so it can't tell the difference between muscle and fat. A very muscular athlete may
+    register as "overweight" or "obese" despite low body fat, while an older adult with reduced muscle mass may have a
+    "normal" BMI yet carry excess fat. BMI also says nothing about where fat is stored — waist circumference and other
+    measures add useful context. Treat your BMI as one data point and discuss it with a qualified healthcare
+    professional before drawing conclusions.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight" target="_blank"
+            rel="noopener">WHO — Obesity and overweight (fact sheet)</a></li>
+    <li><a href="https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html" target="_blank" rel="noopener">CDC —
+            About Adult BMI</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Body_mass_index" target="_blank" rel="noopener">Body Mass Index —
+            Wikipedia</a></li>
+</ul>
+{{end}}
