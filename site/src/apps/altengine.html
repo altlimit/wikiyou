@@ -1,0 +1,59 @@
+---
+updated: "2026-07-17"
+template: profile.html
+title: altengine
+description: "altengine offers simple, App Engine-style managed cloud services — a Search API, a Channel API, and a Datastore document store — over clean REST APIs with usage-based pricing."
+subtitle: App Engine-style managed cloud services
+category: apps
+category_label: Apps
+type: Managed Cloud Services
+industry: Cloud Infrastructure / Developer Tools
+website: "https://altengine.net"
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    altengine is a cloud platform that provides a set of simple, managed services modeled on the developer experience of
+    Google App Engine. Rather than exposing services through language-specific SDKs, altengine makes each of its
+    offerings available over clean REST APIs that exchange JSON, allowing applications written in any environment to use
+    them directly. The platform's initial services cover full-text search, realtime messaging, and document storage.
+    Developers manage their applications and credentials through a web-based developer console at
+    <a href="https://console.altengine.net" target="_blank" rel="noopener">console.altengine.net</a>.
+</p>
+
+<h2>Services</h2>
+<p>
+    altengine launched with three services, each addressing a distinct application need:
+</p>
+<ul>
+    <li><strong>Search API</strong> — A full-text search service that preserves the semantics of App Engine's legacy
+        Search service, including its query language, typed document fields, faceted search, and result sorting. These
+        capabilities are reached over altengine's own REST API rather than through the original App Engine language
+        SDKs.</li>
+    <li><strong>Channel API</strong> — A realtime messaging service based on the publish/subscribe model of App Engine's
+        legacy Channel service, allowing servers to push messages to connected clients. As with the Search API, its
+        behavior is preserved but delivered over a REST interface.</li>
+    <li><strong>Datastore API</strong> — A JSON document store featuring a bounded query engine, joins, and grouped
+        aggregates. The Datastore provides strongly consistent reads, so data returned by a query reflects the most
+        recently written values.</li>
+</ul>
+
+<h2>Relationship to App Engine</h2>
+<p>
+    The Search and Channel services offered by altengine are revivals of two services that Google App Engine retired.
+    altengine reproduces their established semantics — the query language, field types, facets, and sorting of Search,
+    and the realtime pub/sub behavior of Channel — while exposing them through its own REST/JSON API instead of the
+    original platform's SDKs. Despite this lineage, altengine is an independent project and is <strong>not affiliated
+        with Google</strong>. The Datastore API is a distinct offering rather than a direct revival, drawing on the same
+    App Engine-style approach to managed services.
+</p>
+
+<h2>Pricing Model</h2>
+<p>
+    altengine uses a single usage-based pricing plan in which charges are tied to actual consumption of the services.
+    The plan includes a free monthly allowance, and there is no charge for idle capacity, meaning applications are not
+    billed for reserved or standing clusters when they are not in use. Current details are published on the platform's
+    <a href="https://altengine.net" target="_blank" rel="noopener">website</a>.
+</p>
+{{end}}
