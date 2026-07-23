@@ -1,0 +1,204 @@
+---
+updated: "2026-07-23"
+template: tool.html
+title: ROAS Calculator (Return on Ad Spend)
+description: "Calculate ROAS, break-even ROAS, and profit from your ad spend, revenue, and margin. See whether your ads are actually profitable, not just positive."
+category: tools
+category_label: Tools
+og_type: article
+promo_text: "Want a done-for-you online store and the ad strategy to fill it? That's what AltLimit builds."
+promo_link: "https://www.altlimit.com/online-store-setup/"
+promo_link_text: "AltLimit DFY stores"
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function roasCalc() {
+        return {
+            spend: 1000,
+            revenue: 4000,
+            margin: 40,
+            spendNum: function () { return Number(this.spend) || 0; },
+            revenueNum: function () { return Number(this.revenue) || 0; },
+            marginFrac: function () {
+                var m = Number(this.margin) || 0;
+                return m / 100;
+            },
+            // ROAS = revenue / ad spend
+            roas: function () {
+                if (this.spendNum() <= 0) return null;
+                return this.revenueNum() / this.spendNum();
+            },
+            // Break-even ROAS = 1 / margin
+            breakEven: function () {
+                if (this.marginFrac() <= 0) return null;
+                return 1 / this.marginFrac();
+            },
+            // ACoS = ad spend / revenue (inverse of ROAS)
+            acos: function () {
+                if (this.revenueNum() <= 0) return null;
+                return (this.spendNum() / this.revenueNum()) * 100;
+            },
+            // Profit after ad spend = (revenue * margin) - ad spend
+            profit: function () {
+                return (this.revenueNum() * this.marginFrac()) - this.spendNum();
+            },
+            profitable: function () {
+                return this.profit() > 0;
+            },
+            fmtX: function (n) {
+                if (n === null || !isFinite(n)) return "—";
+                return n.toFixed(2) + "×";
+            },
+            fmtPct: function (n) {
+                if (n === null || !isFinite(n)) return "—";
+                return n.toFixed(1) + "%";
+            },
+            fmt$: function (n) {
+                if (n === null || !isFinite(n)) return "—";
+                var sign = n < 0 ? "-$" : "$";
+                return sign + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="roasCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="spend">Ad Spend ($)</label>
+            <input type="text" id="spend" x-model="spend" placeholder="1000">
+        </div>
+
+        <div class="form-group">
+            <label for="revenue">Revenue from Ads ($)</label>
+            <input type="text" id="revenue" x-model="revenue" placeholder="4000">
+        </div>
+
+        <div class="form-group">
+            <label for="margin">Product Margin (%)</label>
+            <input type="text" id="margin" x-model="margin" placeholder="40">
+        </div>
+
+        <p class="text-xs text-muted">Margin is your gross profit as a percent of revenue — what's left after cost of
+            goods, before ad spend. Everything you enter stays in your browser.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">ROAS (Return on Ad Spend)</p>
+            <div class="form-result" x-text="fmtX(roas())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Break-even ROAS</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmtX(breakEven())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Profit after ad spend</p>
+            <div class="form-result" x-text="fmt$(profit())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">ACoS (Ad Cost of Sales)</p>
+            <div class="text-lg" x-text="fmtPct(acos())"></div>
+
+            <p class="text-sm mt-4" x-show="roas() !== null && breakEven() !== null && profitable()">
+                Your ROAS beats break-even — these ads are <strong>profitable</strong>.
+            </p>
+            <p class="text-sm mt-4" x-show="roas() !== null && breakEven() !== null && !profitable()">
+                Your ROAS is <strong>below break-even</strong> — you're losing money on every sale after margin.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is ROAS?</h2>
+<p>
+    <strong>ROAS</strong> stands for <strong>Return on Ad Spend</strong> — the revenue you earn for every dollar you
+    spend on advertising. It is the single most common metric marketers use to judge whether a campaign is "working."
+    A ROAS of 4× means every $1 of ad spend brought back $4 in revenue. The formula is simple:
+</p>
+<p>
+    <strong>ROAS = Revenue from Ads ÷ Ad Spend</strong>
+</p>
+<p>
+    The catch is that a high ROAS does not automatically mean you made money. Revenue is not profit. If your products
+    carry thin margins, a 4× ROAS can still leave you underwater once the cost of goods is subtracted. That's why this
+    calculator also computes your <strong>break-even ROAS</strong> and your actual <strong>profit after ad spend</strong>.
+</p>
+
+<h2>ROAS vs. profitable ROAS: break-even ROAS</h2>
+<p>
+    Your <strong>break-even ROAS</strong> is the ROAS you need just to cover the cost of the goods you sold. It depends
+    entirely on your product margin:
+</p>
+<p>
+    <strong>Break-even ROAS = 1 ÷ Product Margin</strong>
+</p>
+<ul>
+    <li>At a <strong>50% margin</strong>, break-even ROAS is 1 ÷ 0.50 = <strong>2.0×</strong>.</li>
+    <li>At a <strong>40% margin</strong>, break-even ROAS is 1 ÷ 0.40 = <strong>2.5×</strong>.</li>
+    <li>At a <strong>25% margin</strong>, break-even ROAS is 1 ÷ 0.25 = <strong>4.0×</strong>.</li>
+</ul>
+<p>
+    Any ROAS <em>above</em> your break-even point is profitable; any ROAS <em>below</em> it loses money even though it
+    still looks like a positive return. This is the number most advertisers forget to compute — they chase a "good"
+    ROAS like 4× without checking whether 4× is even enough for their margins.
+</p>
+
+<h2>What is ACoS?</h2>
+<p>
+    <strong>ACoS</strong> (Advertising Cost of Sales) is simply the inverse of ROAS, expressed as a percentage. It's
+    the metric Amazon Ads reports by default. <strong>ACoS = Ad Spend ÷ Revenue × 100</strong>. A 4× ROAS is the same
+    as a 25% ACoS — you spent 25 cents in ads for every dollar of revenue. Lower ACoS is better; higher ROAS is better;
+    they describe the same relationship from opposite directions.
+</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Enter your <strong>ad spend</strong>, the <strong>revenue those ads generated</strong>, and your
+    <strong>product margin</strong> (gross profit as a percent of revenue, before ad costs). The calculator instantly
+    returns your ROAS, the break-even ROAS you need to hit, your profit after ad spend, and your ACoS — and tells you
+    plainly whether the campaign is actually profitable.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose you spend <strong>$1,000</strong> on ads and they generate <strong>$4,000</strong> in revenue on products
+    with a <strong>40% margin</strong>:
+</p>
+<ul>
+    <li><strong>ROAS</strong> = $4,000 ÷ $1,000 = <strong>4.0×</strong></li>
+    <li><strong>Break-even ROAS</strong> = 1 ÷ 0.40 = <strong>2.5×</strong></li>
+    <li><strong>Gross profit on that revenue</strong> = $4,000 × 40% = $1,600</li>
+    <li><strong>Profit after ad spend</strong> = $1,600 − $1,000 = <strong>$600</strong></li>
+    <li><strong>ACoS</strong> = $1,000 ÷ $4,000 = <strong>25%</strong></li>
+</ul>
+<p>
+    Because 4.0× is comfortably above the 2.5× break-even, the campaign clears $600 in real profit. Drop the margin to
+    25% and break-even rises to 4.0× — that same 4.0× ROAS would now merely break even, netting $0 in profit. Same ads,
+    same revenue, very different outcome: this is why margin belongs in every ROAS decision.
+</p>
+<p class="text-sm text-muted">
+    This tool measures the direct return on a given batch of ad spend. It does not account for fixed overhead, returns,
+    shipping subsidies, repeat-purchase (lifetime) value, or attribution accuracy — real businesses often accept a lower
+    ROAS on the first order because a customer buys again. Use it as a fast profitability check, not a full P&amp;L.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Return_on_advertising_spend" target="_blank" rel="noopener">Return on
+            Advertising Spend — Wikipedia</a></li>
+    <li><a href="https://support.google.com/google-ads/answer/6259715" target="_blank" rel="noopener">About conversion
+            value and ROAS — Google Ads Help</a></li>
+    <li><a href="https://advertising.amazon.com/library/guides/acos" target="_blank" rel="noopener">What is ACoS? —
+            Amazon Ads</a></li>
+</ul>
+{{end}}
