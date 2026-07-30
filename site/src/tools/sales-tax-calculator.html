@@ -1,0 +1,181 @@
+---
+updated: "2026-07-30"
+template: tool.html
+title: Sales Tax Calculator
+description: "Add or remove sales tax from any amount at any rate. Get the tax amount and the pre-tax and after-tax totals instantly, right in your browser."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        if (d.currentScript) {
+            var s = d.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+            s.defer = true;
+            d.head.appendChild(s);
+        } else {
+            var s = d.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine-ie11.min.js";
+            d.head.appendChild(s);
+        }
+    })(document);
+</script>
+<script>
+    function taxCalc() {
+        return {
+            amount: 100,
+            rate: 8.25,
+            mode: "add",
+            amt: function () { return Number(this.amount) || 0; },
+            r: function () { return Number(this.rate) || 0; },
+            // Pre-tax base (subtotal).
+            base: function () {
+                if (this.mode === "add") return this.amt();
+                var d = 1 + this.r() / 100;
+                if (d === 0) return 0;
+                return this.amt() / d;
+            },
+            // The sales tax portion.
+            tax: function () {
+                if (this.mode === "add") return this.amt() * this.r() / 100;
+                return this.amt() - this.base();
+            },
+            // Total including tax.
+            total: function () {
+                if (this.mode === "add") return this.amt() + this.tax();
+                return this.amt();
+            },
+            amountLabel: function () {
+                return this.mode === "add" ? "Amount (before tax)" : "Amount (tax included)";
+            },
+            fmt: function (n) {
+                if (!isFinite(n)) n = 0;
+                return "$" + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="taxCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <span class="text-sm text-light" style="display:block;margin-bottom:.5rem">What do you want to do?</span>
+            <label for="mode-add" class="flex" style="align-items:center;gap:.5rem;margin-bottom:.5rem">
+                <input type="radio" id="mode-add" value="add" x-model="mode" style="width:auto">
+                <span>Add sales tax to a price</span>
+            </label>
+            <label for="mode-remove" class="flex" style="align-items:center;gap:.5rem;margin-bottom:.5rem">
+                <input type="radio" id="mode-remove" value="remove" x-model="mode" style="width:auto">
+                <span>Remove sales tax from a price</span>
+            </label>
+            <label for="mode-reverse" class="flex" style="align-items:center;gap:.5rem">
+                <input type="radio" id="mode-reverse" value="reverse" x-model="mode" style="width:auto">
+                <span>Reverse a total into subtotal + tax</span>
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label for="amount" x-text="amountLabel()">Amount (before tax)</label>
+            <input type="text" id="amount" x-model="amount" placeholder="100">
+        </div>
+
+        <div class="form-group">
+            <label for="rate">Sales Tax Rate (%)</label>
+            <input type="text" id="rate" x-model="rate" placeholder="8.25">
+        </div>
+
+        <p class="text-xs text-muted">Enter your own local rate — sales tax varies by state, county, and city, so
+            there is no single correct number. Everything is calculated in your browser; nothing is sent anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Sales tax</p>
+            <div class="form-result" x-text="fmt(tax())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Pre-tax subtotal</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(base())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Total with tax</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(total())"></div>
+
+            <p class="text-sm text-muted mt-4">
+                <span x-text="fmt(base())"></span> +
+                <span x-text="fmt(tax())"></span> tax =
+                <span x-text="fmt(total())"></span>
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this Sales Tax Calculator does</h2>
+<p>
+    Sales tax is a consumption tax added to the price of goods and services at the point of sale. This calculator works
+    both directions: it can <strong>add</strong> tax onto a listed price to find the final total you will pay, or
+    <strong>remove</strong> (back out) the tax that is already baked into a tax-inclusive figure so you can see the
+    original pre-tax price and the tax portion separately. It deliberately does not assume any jurisdiction's rate — you
+    type in the exact percentage that applies to your purchase, so the answer is always correct for your city, county,
+    or country.
+</p>
+
+<h2>The three modes</h2>
+<ul>
+    <li><strong>Add sales tax to a price.</strong> Enter a price <em>before</em> tax and the rate. The tool multiplies
+        the price by the rate to get the tax, then adds it to give the final total.</li>
+    <li><strong>Remove sales tax from a price.</strong> Enter a price that <em>already includes</em> tax. The tool
+        divides it back out to reveal the original pre-tax amount and how much of the sticker was tax.</li>
+    <li><strong>Reverse a total into subtotal + tax.</strong> This is the same reverse math applied to a grand total —
+        handy for filling in an invoice or expense report where you know only the amount paid and need the breakdown.</li>
+</ul>
+
+<h2>The formulas</h2>
+<p>
+    Where <strong>rate</strong> is the tax percentage written as a decimal (for example 8.25% becomes 0.0825):
+</p>
+<ul>
+    <li><strong>Adding tax:</strong> tax = price &times; rate, and total = price + tax = price &times; (1 + rate).</li>
+    <li><strong>Removing tax:</strong> subtotal = total &divide; (1 + rate), and tax = total &minus; subtotal.</li>
+</ul>
+<p>
+    Removing tax is <em>not</em> the same as simply subtracting the tax percentage from the total. Because the tax was
+    calculated on the smaller pre-tax base, you must divide by (1 + rate) rather than multiply. Subtracting the
+    percentage directly would overstate the tax and understate the original price.
+</p>
+
+<h2>How to use it</h2>
+<p>
+    Pick a mode, enter the amount, and type your local sales tax rate as a percentage. The results update instantly:
+    the sales tax portion, the pre-tax subtotal, and the total with tax, plus a one-line breakdown so you can sanity
+    check the arithmetic. Nothing is transmitted to a server — the calculation runs entirely in your browser.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose an item is listed at <strong>$100.00</strong> and the combined sales tax rate is <strong>8.25%</strong>.
+    In <em>add</em> mode, the tax is 100 &times; 0.0825 = <strong>$8.25</strong>, so the final total is
+    <strong>$108.25</strong>. Now flip it around: if a receipt shows a tax-inclusive total of <strong>$108.25</strong>
+    at the same 8.25% rate, <em>remove</em> mode divides 108.25 &divide; 1.0825 to recover the original
+    <strong>$100.00</strong> subtotal, confirming the <strong>$8.25</strong> of tax. The two modes are exact inverses of
+    each other.
+</p>
+<p>
+    Rates differ widely by location and change over time, and some places apply additional district or special-purpose
+    taxes on top of the base state rate. Always confirm the current combined rate for the exact address of the sale
+    before relying on a figure for accounting or invoicing.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Sales_tax" target="_blank" rel="noopener">Sales tax — Wikipedia</a></li>
+    <li><a href="https://taxfoundation.org/data/all/state/2024-sales-taxes/" target="_blank" rel="noopener">State &amp;
+            Local Sales Tax Rates — Tax Foundation</a></li>
+    <li><a href="https://www.investopedia.com/terms/s/salestax.asp" target="_blank" rel="noopener">Sales Tax
+            Definition — Investopedia</a></li>
+</ul>
+{{end}}
