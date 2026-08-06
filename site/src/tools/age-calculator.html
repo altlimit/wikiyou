@@ -1,0 +1,290 @@
+---
+updated: "2026-08-06"
+template: tool.html
+title: Age Calculator
+description: "Calculate exact age in years, months and days between a birth date and any date, plus total days, weeks and the countdown to the next birthday."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function ageCalc() {
+        return {
+            birth: "",
+            asOf: (function () {
+                var t = new Date();
+                var m = t.getMonth() + 1, d = t.getDate();
+                return t.getFullYear() + "-" + (m < 10 ? "0" + m : m) + "-" + (d < 10 ? "0" + d : d);
+            })(),
+            dayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            monthNames: ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"],
+
+            // Build a UTC timestamp without the two-digit-year remapping of Date.UTC().
+            utc: function (y, m, d) {
+                var t = new Date(0);
+                t.setUTCFullYear(y, m - 1, d);
+                t.setUTCHours(0, 0, 0, 0);
+                return t.getTime();
+            },
+            // Days in month m (1-12) of year y. m = 0 means December of y-1.
+            dim: function (y, m) {
+                return new Date(this.utc(y, m + 1, 0)).getUTCDate();
+            },
+            parse: function (s) {
+                if (!s) return null;
+                var p = String(s).split("-");
+                if (p.length !== 3) return null;
+                var y = parseInt(p[0], 10), m = parseInt(p[1], 10), d = parseInt(p[2], 10);
+                if (!isFinite(y) || !isFinite(m) || !isFinite(d)) return null;
+                if (y < 100 || m < 1 || m > 12 || d < 1) return null;
+                if (d > this.dim(y, m)) return null;
+                return { y: y, m: m, d: d, ms: this.utc(y, m, d) };
+            },
+
+            calc: function () {
+                var b = this.parse(this.birth), a = this.parse(this.asOf);
+                if (!b || !a) return null;
+                if (a.ms < b.ms) return { reversed: true };
+                var y = a.y - b.y, m = a.m - b.m, d = a.d - b.d;
+                if (d < 0) { m -= 1; d += this.dim(a.y, a.m - 1); }
+                if (m < 0) { m += 12; y -= 1; }
+                var totalDays = Math.round((a.ms - b.ms) / 86400000);
+                return {
+                    ok: true, y: y, m: m, d: d,
+                    totalDays: totalDays,
+                    totalMonths: y * 12 + m,
+                    totalWeeks: Math.floor(totalDays / 7),
+                    spareDays: totalDays % 7,
+                    totalHours: totalDays * 24,
+                    bornOn: this.dayNames[new Date(b.ms).getUTCDay()]
+                };
+            },
+            next: function () {
+                var b = this.parse(this.birth), a = this.parse(this.asOf);
+                if (!b || !a || a.ms < b.ms) return null;
+                var y = a.y;
+                var ms = this.clamp(y, b.m, b.d);
+                if (ms < a.ms) { y += 1; ms = this.clamp(y, b.m, b.d); }
+                return {
+                    ms: ms,
+                    days: Math.round((ms - a.ms) / 86400000),
+                    turns: y - b.y,
+                    label: this.longDate(ms)
+                };
+            },
+            clamp: function (y, m, d) {
+                return this.utc(y, m, Math.min(d, this.dim(y, m)));
+            },
+
+            fmt: function (n) {
+                return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            plural: function (n, word) {
+                return this.fmt(n) + " " + word + (Math.round(Number(n) || 0) === 1 ? "" : "s");
+            },
+            longDate: function (ms) {
+                var t = new Date(ms);
+                return this.monthNames[t.getUTCMonth()] + " " + t.getUTCDate() + ", " + t.getUTCFullYear();
+            },
+
+            hasResult: function () { var c = this.calc(); return !!(c && c.ok); },
+            isReversed: function () { var c = this.calc(); return !!(c && c.reversed); },
+            ageMain: function () {
+                var c = this.calc();
+                if (!c || !c.ok) return "—";
+                return this.plural(c.y, "year");
+            },
+            ageDetail: function () {
+                var c = this.calc();
+                if (!c || !c.ok) return "";
+                return this.plural(c.m, "month") + ", " + this.plural(c.d, "day");
+            },
+            weeksText: function () {
+                var c = this.calc();
+                if (!c || !c.ok) return "";
+                if (c.spareDays === 0) return this.fmt(c.totalWeeks);
+                return this.fmt(c.totalWeeks) + " + " + this.plural(c.spareDays, "day");
+            },
+            nextText: function () {
+                var n = this.next();
+                if (!n) return "";
+                if (n.days === 0) return "Today — happy birthday!";
+                return this.plural(n.days, "day") + " (" + n.label + ")";
+            },
+            turnsText: function () {
+                var n = this.next();
+                if (!n) return "";
+                return n.days === 0 ? "Turning " + this.fmt(n.turns) : "Turning " + this.fmt(n.turns) + " then";
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="ageCalc()" class="grid-2" style="margin:0" onsubmit="return false">
+    <div>
+        <div class="form-group">
+            <label for="birth">Date of Birth</label>
+            <input type="date" id="birth" x-model="birth">
+        </div>
+
+        <div class="form-group">
+            <label for="asOf">Age as of</label>
+            <input type="date" id="asOf" x-model="asOf">
+        </div>
+
+        <p class="text-xs text-muted">Defaults to today. Change it to work out an age on any past or future
+            date — a school cut-off, a policy renewal, a milestone anniversary.</p>
+
+        <p class="text-xs text-muted mt-2">Both dates stay in your browser. Nothing you type here is sent
+            anywhere or stored.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Age on the as-of date</p>
+            <div class="form-result" x-text="ageMain()"></div>
+            <p class="text-sm mb-2" x-show="hasResult()" x-text="ageDetail()"></p>
+
+            <p class="text-sm text-light mb-2" x-show="!hasResult() &amp;&amp; !isReversed()">
+                Enter a date of birth to see the exact age.
+            </p>
+            <p class="text-sm text-light mb-2" x-show="isReversed()">
+                The as-of date is earlier than the date of birth — pick a later as-of date.
+            </p>
+        </div>
+
+        <div x-show="hasResult()">
+            <div class="flex mb-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Total days</span>
+                <span class="text-sm"><strong x-text="fmt(calc().totalDays)"></strong></span>
+            </div>
+            <div class="flex mb-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Total weeks</span>
+                <span class="text-sm"><strong x-text="weeksText()"></strong></span>
+            </div>
+            <div class="flex mb-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Whole months</span>
+                <span class="text-sm"><strong x-text="fmt(calc().totalMonths)"></strong></span>
+            </div>
+            <div class="flex mb-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Total hours</span>
+                <span class="text-sm"><strong x-text="fmt(calc().totalHours)"></strong></span>
+            </div>
+            <div class="flex mb-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Born on a</span>
+                <span class="text-sm"><strong x-text="calc().bornOn"></strong></span>
+            </div>
+            <div class="flex mb-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Next birthday</span>
+                <span class="text-sm"><strong x-text="nextText()"></strong></span>
+            </div>
+            <p class="text-xs text-muted text-center mt-2" x-text="turnsText()"></p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this age calculator does</h2>
+<p>
+    This tool works out an exact age in <strong>years, months and days</strong> between any two dates. Enter a date of
+    birth and an "as of" date — which defaults to today — and it reports the age on that date, along with the total
+    number of days, weeks, whole months and hours that have elapsed, the day of the week the person was born, and how
+    long until the next birthday.
+</p>
+<p>
+    It is not limited to birthdays. The same arithmetic answers "how old is this contract", "how many days until the
+    lease anniversary", or "will this child be five before the school cut-off". Everything runs in your browser: the two
+    dates you type are never transmitted or saved.
+</p>
+
+<h2>How to use it</h2>
+<ul>
+    <li><strong>Date of birth</strong> — the starting date. Any date from the year 100 onward is accepted.</li>
+    <li><strong>Age as of</strong> — the date you want the age measured on. Leave it as today for a current age, or set
+        it to a future date to see how old someone will be, or a past date to see how old they were.</li>
+</ul>
+<p>
+    Results update as you type. If the as-of date falls before the date of birth, the tool says so rather than showing a
+    negative or nonsensical age.
+</p>
+
+<h2>How age in years, months and days is calculated</h2>
+<p>
+    Calendar age is not a simple division. Months contain 28, 29, 30 or 31 days, so the only correct method is to
+    subtract the calendar components and then "borrow" across the boundaries, exactly as you would when subtracting
+    multi-digit numbers by hand:
+</p>
+<ol>
+    <li>Subtract the components separately: <strong>years = Y2 &minus; Y1</strong>, <strong>months = M2 &minus;
+            M1</strong>, <strong>days = D2 &minus; D1</strong>.</li>
+    <li>If the day figure is negative, borrow one month: subtract 1 from months and add the length of the
+        <em>month before the as-of date</em> to days. Borrowing the preceding month's real length — not a fixed 30 — is
+        what makes the answer correct across February and the 31-day months.</li>
+    <li>If the month figure is then negative, borrow one year: subtract 1 from years and add 12 to months.</li>
+</ol>
+<p>
+    The <strong>total days</strong> figure is computed separately, by taking the difference between the two dates in
+    UTC and dividing by 86,400 seconds. Using UTC matters: it sidesteps daylight-saving transitions, which make some
+    local days 23 or 25 hours long and can otherwise push a total off by one. Total weeks is the whole-week part of that
+    day count, with the remaining days shown alongside.
+</p>
+
+<h2>Leap years and February 29</h2>
+<p>
+    In the Gregorian calendar a year is a leap year if it is divisible by 4, except for century years, which must also
+    be divisible by 400. So 1900 was not a leap year, 2000 was, and 2100 will not be. This calculator derives every
+    month length from the calendar itself rather than from a lookup table, so leap days are handled automatically —
+    including a birth date of February 29.
+</p>
+<p>
+    For someone born on February 29, the next-birthday figure falls back to <strong>February 28</strong> in non-leap
+    years. That is a convention, not a law: different jurisdictions treat a "leaping" birthday as February 28 or March 1
+    for legal purposes, so check the local rule if the exact date carries legal weight.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Take a birth date of <strong>15 March 1990</strong> and an as-of date of <strong>6 August 2026</strong>.
+</p>
+<ul>
+    <li>Years: 2026 &minus; 1990 = <strong>36</strong>. Months: 8 &minus; 3 = <strong>5</strong>. Days: 6 &minus; 15 =
+        <strong>&minus;9</strong>.</li>
+    <li>The day figure is negative, so borrow one month. The month before August is July, which has 31 days: months
+        becomes 4, and days becomes &minus;9 + 31 = <strong>22</strong>.</li>
+    <li>The month figure is still positive, so no year borrow is needed. The result is <strong>36 years, 4 months, 22
+            days</strong>.</li>
+    <li>Total days: from 15 March 1990 to 6 August 2026 is <strong>13,293 days</strong> — that is 1,899 whole weeks
+        exactly.</li>
+</ul>
+
+<h2>A note on age reckoning</h2>
+<p>
+    The years/months/days answer above reflects the Western convention, in which a person is zero years old at birth and
+    gains a year on each birthday. Other systems exist: traditional East Asian age reckoning counted a newborn as one
+    year old and added a year at the lunar new year rather than on the birthday, and some insurance and actuarial tables
+    use "age nearest birthday" instead of "age last birthday". If a number here has to match an official form, confirm
+    which convention that form expects.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Gregorian_calendar" target="_blank" rel="noopener">Gregorian Calendar —
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Leap_year" target="_blank" rel="noopener">Leap Year — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/East_Asian_age_reckoning" target="_blank" rel="noopener">East Asian Age
+            Reckoning — Wikipedia</a></li>
+</ul>
+{{end}}
