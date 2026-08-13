@@ -1,0 +1,221 @@
+---
+updated: "2026-08-13"
+template: tool.html
+title: Discount Calculator
+description: "Calculate the sale price and amount saved from an original price and a percentage discount. Stack two discounts and see the effective discount rate."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function discountCalc() {
+        return {
+            price: 120,
+            discount1: 25,
+            discount2: 0,
+            // Clamp a percentage into 0–100 and treat blank/garbage as 0.
+            pct: function (v) {
+                var n = Number(v);
+                if (!isFinite(n) || n < 0) return 0;
+                if (n > 100) return 100;
+                return n;
+            },
+            base: function () {
+                var n = Number(this.price);
+                if (!isFinite(n) || n < 0) return 0;
+                return n;
+            },
+            // Second discount applies to the price left after the first one.
+            finalPrice: function () {
+                var p = this.base();
+                p = p * (1 - this.pct(this.discount1) / 100);
+                p = p * (1 - this.pct(this.discount2) / 100);
+                return p;
+            },
+            saved: function () {
+                return this.base() - this.finalPrice();
+            },
+            effectivePct: function () {
+                var b = this.base();
+                if (b <= 0) return 0;
+                return this.saved() / b * 100;
+            },
+            stacked: function () {
+                return this.pct(this.discount1) > 0 && this.pct(this.discount2) > 0;
+            },
+            // What the two discounts would be if you (wrongly) just added them up.
+            addedPct: function () {
+                var sum = this.pct(this.discount1) + this.pct(this.discount2);
+                return sum > 100 ? 100 : sum;
+            },
+            fmt: function (n) {
+                var v = Number(n);
+                if (!isFinite(v)) v = 0;
+                return "$" + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            fmtPct: function (n) {
+                var v = Number(n);
+                if (!isFinite(v)) v = 0;
+                return (Math.round(v * 100) / 100) + "%";
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="discountCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="price">Original Price ($)</label>
+            <input type="text" id="price" x-model="price" placeholder="120">
+        </div>
+
+        <div class="form-group">
+            <label for="discount1">Discount (%)</label>
+            <input type="text" id="discount1" x-model="discount1" placeholder="25">
+        </div>
+
+        <div class="form-group">
+            <label for="discount2">Second Discount (%) — optional</label>
+            <input type="text" id="discount2" x-model="discount2" placeholder="0">
+        </div>
+
+        <p class="text-xs text-muted">The second discount is applied to the price <em>after</em> the first one, which is
+            how stacked coupons normally work. Leave it at 0 if you only have one discount. Percentages are capped at
+            100%.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Final Price</p>
+            <div class="form-result" x-text="fmt(finalPrice())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">You Save</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(saved())"></div>
+
+            <p class="text-sm mt-4">
+                Effective discount: <strong x-text="fmtPct(effectivePct())"></strong>
+            </p>
+
+            <p class="text-sm text-light mt-2" x-show="stacked()">
+                Stacking <span x-text="fmtPct(pct(discount1))"></span> and <span
+                    x-text="fmtPct(pct(discount2))"></span> is <strong x-text="fmtPct(effectivePct())"></strong> off —
+                not <span x-text="fmtPct(addedPct())"></span>.
+            </p>
+
+            <p class="text-sm text-light mt-2" x-show="base() === 0">
+                Enter an original price above to see your savings.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this discount calculator does</h2>
+<p>
+    This tool takes an original price and a percentage discount and tells you three things: the <strong>final
+        price</strong> you'll actually pay, the <strong>amount saved</strong> in dollars, and the <strong>effective
+        discount</strong> as a percentage of the original price. It also supports <strong>stacking two
+        discounts</strong> — a store-wide sale plus a coupon code, for example — and shows how the combined discount
+    really works out.
+</p>
+<p>
+    Everything runs in your browser. Nothing you type is sent anywhere, saved, or tracked, so you can price out a quote
+    or a margin without it leaving your device.
+</p>
+
+<h2>How to use it</h2>
+<ol>
+    <li>Enter the <strong>original price</strong> — the pre-discount, list, or sticker price.</li>
+    <li>Enter the <strong>discount percentage</strong>. A "25% off" sign means you enter 25.</li>
+    <li>If you have a second discount that applies on top, enter it in the optional field. Otherwise leave it at 0.</li>
+    <li>Read the final price and savings on the right. They update as you type — there's no button to press.</li>
+</ol>
+<p>
+    The calculator works in whatever currency you're thinking in; the dollar sign is just formatting. It doesn't include
+    sales tax, shipping, or handling — those are applied by the seller after the discount in most jurisdictions, so
+    calculate the discount first and add tax to the result.
+</p>
+
+<h2>The formula</h2>
+<p>
+    A percentage discount is a proportional reduction of the original price. For a single discount:
+</p>
+<ul>
+    <li><strong>Amount saved = Original price × (Discount % ÷ 100)</strong></li>
+    <li><strong>Final price = Original price − Amount saved</strong>, which is the same as
+        <strong>Original price × (1 − Discount % ÷ 100)</strong>
+    </li>
+</ul>
+<p>
+    For two stacked discounts, the second one applies to what's left after the first, so the multipliers multiply rather
+    than add:
+</p>
+<ul>
+    <li><strong>Final price = Original price × (1 − d<sub>1</sub>) × (1 − d<sub>2</sub>)</strong>, where d is each
+        discount expressed as a decimal</li>
+    <li><strong>Effective discount % = (Amount saved ÷ Original price) × 100</strong></li>
+</ul>
+<p>
+    This is why stacked discounts are always <em>less</em> generous than they look. Two 20% discounts are not 40% off —
+    they're 1 − (0.80 × 0.80) = 0.36, or <strong>36% off</strong>. The order you apply them in doesn't matter:
+    multiplication is commutative, so 20% then 30% gives exactly the same final price as 30% then 20%.
+</p>
+
+<h2>A worked example</h2>
+<p>
+    Say a jacket is listed at <strong>$120</strong> and the store is running a <strong>25% off</strong> sale.
+</p>
+<ul>
+    <li>Amount saved: $120 × 0.25 = <strong>$30.00</strong></li>
+    <li>Final price: $120 − $30 = <strong>$90.00</strong></li>
+</ul>
+<p>
+    Now suppose you also have a <strong>10% off</strong> newsletter code that stacks on top. The 10% comes off the
+    already-discounted $90, not the original $120:
+</p>
+<ul>
+    <li>Second discount: $90 × 0.10 = $9.00</li>
+    <li>Final price: $90 − $9 = <strong>$81.00</strong></li>
+    <li>Total saved: $120 − $81 = <strong>$39.00</strong></li>
+    <li>Effective discount: $39 ÷ $120 = <strong>32.5%</strong>, not the 35% you'd get by adding 25 + 10</li>
+</ul>
+<p>
+    That 2.5-point gap is small on a jacket and large on a car. Whenever a promotion advertises "an extra 10% off sale
+    prices," the extra percentage is nearly always calculated this way.
+</p>
+
+<h2>Working backwards</h2>
+<p>
+    If you know the sale price and the original price and want the discount percentage, the relationship inverts:
+    <strong>Discount % = (Original − Sale) ÷ Original × 100</strong>. A $120 jacket selling for $81 was discounted by
+    ($120 − $81) ÷ $120 = 32.5%. You can also use this tool in reverse by adjusting the discount until the final price
+    matches the ticket price you're looking at.
+</p>
+<p>
+    One caution when discounting your own products: a discount percentage off the <em>price</em> is not the same as a
+    percentage off your <em>margin</em>. If an item costs you $70 and sells for $120, a 25% discount cuts $30 from a $50
+    gross margin — a 60% reduction in profit on that sale. Retailers often set discount ceilings by working from the
+    margin, not the sticker price.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Discounts_and_allowances" target="_blank" rel="noopener">Discounts and
+            allowances — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Percentage" target="_blank" rel="noopener">Percentage — Wikipedia</a></li>
+    <li><a href="https://consumer.ftc.gov/articles/how-avoid-scams-during-holidays" target="_blank" rel="noopener">FTC
+            Consumer Advice: shopping and sale pricing</a></li>
+</ul>
+{{end}}
