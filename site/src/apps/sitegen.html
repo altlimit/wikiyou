@@ -1,0 +1,73 @@
+---
+updated: "2026-08-14"
+template: profile.html
+title: SiteGen
+description: "SiteGen is an open-source static site generator written in Go that renders HTML with YAML front matter through Go templates."
+subtitle: Static site generator written in Go
+category: apps
+category_label: Apps
+type: Open-Source Software
+industry: Web Development / Static Site Generators
+website: "https://github.com/altlimit/sitegen"
+github: altlimit/sitegen
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    SiteGen is an open-source static site generator written in the Go programming language and maintained by Altlimit
+    LLC. It takes a source directory containing the pages of a website and builds them into an output directory of
+    static files, which can then be served by any ordinary web server or static hosting service.
+</p>
+<p>
+    The project is distributed as a single binary and does not depend on an external build toolchain. There is no
+    bundler or package manager to install alongside it, so a working copy of the generator is sufficient to build a
+    site. SiteGen is published on GitHub, where its source code and issue tracker are available at
+    <a href="https://github.com/altlimit/sitegen" target="_blank" rel="noopener">github.com/altlimit/sitegen</a>.
+</p>
+
+<h2>Features</h2>
+<ul>
+    <li><strong>HTML and Markdown pages</strong> — Pages may be authored either as HTML files or as Markdown files,
+        allowing markup-heavy pages and prose-heavy pages to live in the same source tree.</li>
+    <li><strong>YAML front matter</strong> — Each page begins with a YAML block that carries its metadata, which is
+        made available to the templates that render the page.</li>
+    <li><strong>Go template rendering</strong> — Pages are rendered through Go's <code>html/template</code> syntax,
+        with shared layout partials so that common markup is defined once and reused across pages.</li>
+    <li><strong>Data files</strong> — Structured data can be kept in separate files and referenced during rendering,
+        rather than being repeated inside individual pages.</li>
+    <li><strong>Sitemap generation</strong> — A sitemap for the generated site is produced as part of the build.</li>
+    <li><strong>Development server</strong> — A built-in server previews the site locally and reloads it as source
+        files change.</li>
+    <li><strong>Optional editing UI</strong> — An editing interface can be enabled alongside the development server for
+        changing content through the browser.</li>
+    <li><strong>No external toolchain</strong> — The generator requires no bundler or package manager beyond the single
+        binary itself.</li>
+</ul>
+
+<h2>How It Works</h2>
+<p>
+    A SiteGen project is organized around a source directory of pages. Every page file opens with a YAML front-matter
+    block describing that page, followed by the page body in HTML or Markdown. During a build, SiteGen reads each page,
+    makes its front-matter values available to the template layer, and renders the result through Go's
+    <code>html/template</code> engine. Layout partials shared across the project supply the surrounding structure, so
+    individual pages contain only the content specific to them.
+</p>
+<p>
+    Content that is not tied to a single page can be placed in data files and referenced while rendering, which keeps
+    repeated values in one place. The build writes the finished pages into the output directory along with a sitemap,
+    producing a set of static files with no server-side runtime requirement.
+</p>
+
+<h2>Usage</h2>
+<p>
+    SiteGen is typically run in one of two modes. During development, the built-in server renders the site and applies
+    changes as source files are edited, with the optional editing UI available for making content changes from a
+    browser. For publishing, the generator performs a full build of the source directory into the output directory,
+    after which the resulting files can be deployed to any static host.
+</p>
+<p>
+    SiteGen is the generator behind several Altlimit sites, including the WikiYou encyclopedia, which is built from a
+    source tree of profile pages using the same front matter and template conventions described above.
+</p>
+{{end}}
