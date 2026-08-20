@@ -1,0 +1,217 @@
+---
+updated: "2026-08-20"
+template: tool.html
+title: Loan Payment Calculator
+description: "Estimate your monthly loan payment, total interest, and total cost from the loan amount, annual rate, and term in years."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function loanCalc() {
+        return {
+            amount: 25000,
+            rate: 6.5,
+            years: 5,
+            // Sanitized numeric inputs — never NaN, never negative.
+            p: function () {
+                var v = parseFloat(this.amount);
+                return isFinite(v) && v > 0 ? v : 0;
+            },
+            annualRate: function () {
+                var v = parseFloat(this.rate);
+                return isFinite(v) && v > 0 ? v : 0;
+            },
+            months: function () {
+                var v = parseFloat(this.years);
+                if (!isFinite(v) || v <= 0) return 0;
+                return Math.round(v * 12);
+            },
+            // Standard amortization: M = P * i / (1 - (1 + i)^-n), with i = 0 handled separately.
+            payment: function () {
+                var n = this.months();
+                var p = this.p();
+                if (n === 0 || p === 0) return 0;
+                var i = this.annualRate() / 100 / 12;
+                if (i === 0) return p / n;
+                var factor = Math.pow(1 + i, -n);
+                if (factor === 1) return p / n;
+                return p * i / (1 - factor);
+            },
+            totalPaid: function () {
+                return this.payment() * this.months();
+            },
+            totalInterest: function () {
+                var t = this.totalPaid() - this.p();
+                return t > 0 ? t : 0;
+            },
+            interestShare: function () {
+                var t = this.totalPaid();
+                if (t <= 0) return 0;
+                return this.totalInterest() / t * 100;
+            },
+            fmt: function (n) {
+                if (!isFinite(n)) return "$0.00";
+                return "$" + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            pct: function (n) {
+                if (!isFinite(n)) return "0.0%";
+                return Number(n).toFixed(1) + "%";
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="loanCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="amount">Loan Amount ($)</label>
+            <input type="text" id="amount" x-model="amount" placeholder="25000">
+        </div>
+
+        <div class="form-group">
+            <label for="rate">Annual Interest Rate (%)</label>
+            <input type="text" id="rate" x-model="rate" placeholder="6.5">
+        </div>
+
+        <div class="form-group">
+            <label for="years">Loan Term (Years)</label>
+            <input type="text" id="years" x-model="years" placeholder="5">
+        </div>
+
+        <p class="text-xs text-muted">Enter the rate your lender quoted you. This is a principal-and-interest estimate
+            only — it does not include taxes, insurance, origination fees, or PMI, which lenders may add to your actual
+            bill. Everything you type stays in your browser.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Monthly Payment</p>
+            <div class="form-result" x-text="fmt(payment())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Total Interest</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(totalInterest())"></div>
+
+            <p class="text-sm mt-4" x-show="payment() > 0">
+                Total cost over <span x-text="months()"></span> payments:
+                <strong x-text="fmt(totalPaid())"></strong>
+            </p>
+            <p class="text-sm text-light mt-2" x-show="totalInterest() > 0">
+                Interest is <strong x-text="pct(interestShare())"></strong> of everything you pay.
+            </p>
+            <p class="text-sm text-light mt-4" x-show="payment() === 0">
+                Enter a loan amount and a term greater than zero to see your payment.
+            </p>
+            <p class="text-sm text-light mt-2" x-show="payment() > 0 &amp;&amp; totalInterest() === 0">
+                At 0% interest you simply repay the principal in equal instalments.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this loan payment calculator does</h2>
+<p>
+    This calculator estimates the fixed monthly payment on an <strong>amortizing loan</strong> — the kind used for most
+    mortgages, auto loans, personal loans, and student loans. With an amortizing loan you pay the same amount every
+    month, and each payment is split between interest (charged on whatever principal is still outstanding) and principal
+    (which reduces the balance). Early payments are mostly interest; later payments are mostly principal. By the final
+    payment, the balance reaches exactly zero.
+</p>
+<p>
+    Alongside the monthly payment, the tool shows the <strong>total amount paid</strong> across the life of the loan and
+    the <strong>total interest</strong> — the difference between what you borrow and what you ultimately hand back. That
+    second number is usually the more revealing one, and it is the one loan advertising tends to leave out.
+</p>
+
+<h2>How to use it</h2>
+<ul>
+    <li><strong>Loan amount</strong> — the principal you actually borrow, after any down payment or trade-in.</li>
+    <li><strong>Annual interest rate</strong> — the nominal annual rate your lender quoted, entered as a percentage
+        (for example, <em>6.5</em> for 6.5%). If you were quoted an APR that folds in fees, using it here gives you a
+        closer estimate of true cost.</li>
+    <li><strong>Loan term</strong> — the repayment period in years. Enter <em>0.5</em> for six months, <em>30</em> for a
+        thirty-year mortgage.</li>
+</ul>
+<p>
+    Results update as you type. Try changing one field at a time: dropping the rate by a point, or shortening the term by
+    a year, shows immediately how much interest that decision saves. Rates vary by borrower, credit profile, and lender,
+    so use a rate you have actually been quoted rather than a national average.
+</p>
+
+<h2>The amortization formula</h2>
+<p>
+    The standard formula for a fixed monthly payment is:
+</p>
+<p>
+    <strong>M = P &times; i / (1 &minus; (1 + i)<sup>&minus;n</sup>)</strong>
+</p>
+<ul>
+    <li><strong>M</strong> = the monthly payment</li>
+    <li><strong>P</strong> = the principal (loan amount)</li>
+    <li><strong>i</strong> = the monthly interest rate, which is the annual rate divided by 100 and then by 12</li>
+    <li><strong>n</strong> = the total number of monthly payments (years &times; 12)</li>
+</ul>
+<p>
+    The formula assumes monthly compounding, which is how the overwhelming majority of consumer loans are quoted. When
+    the interest rate is <strong>0%</strong>, the formula divides by zero, so the calculator falls back to the correct
+    special case: <strong>M = P / n</strong>, an equal split of the principal across every payment. Empty, negative, or
+    non-numeric entries are treated as zero, so you will never see <em>NaN</em> or <em>Infinity</em> in the results.
+</p>
+<p>
+    Total paid is simply <strong>M &times; n</strong>, and total interest is <strong>(M &times; n) &minus; P</strong>.
+    Because the monthly payment is rounded to the cent in practice, a real lender's final payment is often a few cents
+    different from the others; this estimate does not model that rounding.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose you borrow <strong>$25,000</strong> at <strong>6.5%</strong> over <strong>5 years</strong>. The monthly rate
+    is 0.065 / 12 = 0.00541667, and the number of payments is 5 &times; 12 = 60. Plugging those in:
+</p>
+<p>
+    M = 25,000 &times; 0.00541667 / (1 &minus; 1.00541667<sup>&minus;60</sup>) = <strong>$489.15</strong> per month.
+</p>
+<p>
+    Over 60 payments that comes to <strong>$29,349.00</strong>, meaning <strong>$4,349.00</strong> of it is interest —
+    roughly 15% of everything you pay. Stretch the same loan to 7 years and the monthly payment drops to about $372, but
+    total interest climbs past $6,200. That trade-off is the single most useful thing this calculator makes visible: a
+    longer term buys a smaller monthly payment with a larger total bill.
+</p>
+
+<h2>What it does not include</h2>
+<p>
+    This is a principal-and-interest figure. Mortgage lenders typically escrow property taxes, homeowners insurance, and
+    private mortgage insurance on top of it, which can add materially to the amount you send each month. Auto loans may
+    bundle in fees or gap insurance. Some loans carry origination fees deducted from the amount you receive, or
+    prepayment penalties that change the calculus if you plan to pay early. Ask your lender for the full disclosure
+    before signing — the <a href="https://www.consumerfinance.gov/" target="_blank" rel="noopener">CFPB</a> publishes
+    guides on how to read them.
+</p>
+<p class="text-sm text-muted">
+    This tool runs entirely in your browser. Nothing you enter is transmitted, stored, or logged anywhere. It is an
+    estimate for planning purposes and not financial advice.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Amortization_calculator" target="_blank" rel="noopener">Amortization
+            calculator — Wikipedia</a></li>
+    <li><a href="https://www.consumerfinance.gov/owning-a-home/loan-options/" target="_blank" rel="noopener">Loan
+            options — Consumer Financial Protection Bureau</a></li>
+    <li><a href="https://www.investor.gov/financial-tools-calculators/calculators" target="_blank"
+            rel="noopener">Financial tools and calculators — U.S. SEC Investor.gov</a></li>
+</ul>
+{{end}}
