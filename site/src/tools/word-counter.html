@@ -1,0 +1,301 @@
+---
+updated: "2026-08-27"
+template: tool.html
+title: Word & Character Counter
+description: Count words, characters, sentences, and paragraphs as you type — with a reading-time estimate. Runs entirely in your browser.
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function wordCounter() {
+        return {
+            text: "",
+            wpm: 200,
+            spm: 150,
+            limit: "",
+
+            // --- helpers -------------------------------------------------
+            tokens: function () {
+                var t = this.text;
+                if (!t) return [];
+                return t.match(/[^\s]+/g) || [];
+            },
+            num: function (n) {
+                return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+
+            // --- counts --------------------------------------------------
+            words: function () {
+                return this.tokens().length;
+            },
+            characters: function () {
+                return this.text.length;
+            },
+            charactersNoSpaces: function () {
+                return this.text.replace(/\s/g, "").length;
+            },
+            sentences: function () {
+                var t = this.text.trim();
+                if (!t) return 0;
+                var parts = t.split(/[.!?…]+/);
+                var n = 0;
+                for (var i = 0; i < parts.length; i++) {
+                    if (/\S/.test(parts[i])) n++;
+                }
+                return n;
+            },
+            paragraphs: function () {
+                var t = this.text.trim();
+                if (!t) return 0;
+                var lines = t.split(/\n+/);
+                var n = 0;
+                for (var i = 0; i < lines.length; i++) {
+                    if (/\S/.test(lines[i])) n++;
+                }
+                return n;
+            },
+            uniqueWords: function () {
+                var list = this.tokens();
+                var seen = {};
+                var n = 0;
+                for (var i = 0; i < list.length; i++) {
+                    // strip surrounding punctuation, compare case-insensitively
+                    var w = list[i].toLowerCase().replace(/^[^\w'’-]+|[^\w'’-]+$/g, "");
+                    if (!w) continue;
+                    if (!Object.prototype.hasOwnProperty.call(seen, w)) {
+                        seen[w] = true;
+                        n++;
+                    }
+                }
+                return n;
+            },
+
+            // --- averages ------------------------------------------------
+            avgWordLength: function () {
+                var w = this.words();
+                if (!w) return "0";
+                return (this.charactersNoSpaces() / w).toFixed(1);
+            },
+            avgSentenceLength: function () {
+                var s = this.sentences();
+                if (!s) return "0";
+                return (this.words() / s).toFixed(1);
+            },
+
+            // --- time estimates ------------------------------------------
+            fmtTime: function (rate) {
+                var r = Number(rate);
+                var w = this.words();
+                if (!w) return "0 sec";
+                if (!isFinite(r) || r <= 0) return "—";
+                var secs = Math.round(w / r * 60);
+                if (secs < 60) return secs + " sec";
+                var mins = Math.floor(secs / 60);
+                var rem = secs % 60;
+                return mins + " min" + (rem ? " " + rem + " sec" : "");
+            },
+            readingTime: function () {
+                return this.fmtTime(this.wpm);
+            },
+            speakingTime: function () {
+                return this.fmtTime(this.spm);
+            },
+
+            // --- optional character limit --------------------------------
+            hasLimit: function () {
+                var l = Number(this.limit);
+                return this.limit !== "" && isFinite(l) && l > 0;
+            },
+            remaining: function () {
+                if (!this.hasLimit()) return 0;
+                return Math.round(Number(this.limit)) - this.characters();
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<div x-data="wordCounter()">
+    <div class="form-group">
+        <label for="text">Your text</label>
+        <textarea id="text" x-model="text" rows="10"
+            placeholder="Type or paste your text here — the counts update as you type."></textarea>
+        <p class="text-xs text-muted mt-2">Nothing you type leaves your browser. There is no upload, no server, and no
+            storage — close the tab and it is gone.</p>
+    </div>
+
+    <div class="grid-2">
+        <div>
+            <div class="text-center mb-4">
+                <p class="text-sm text-light mb-2">Words</p>
+                <div class="form-result" x-text="num(words())"></div>
+            </div>
+
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--color-border-light)">
+                <span class="text-sm text-light">Characters (with spaces)</span>
+                <strong class="text-sm" x-text="num(characters())"></strong>
+            </div>
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--color-border-light)">
+                <span class="text-sm text-light">Characters (no spaces)</span>
+                <strong class="text-sm" x-text="num(charactersNoSpaces())"></strong>
+            </div>
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--color-border-light)">
+                <span class="text-sm text-light">Sentences</span>
+                <strong class="text-sm" x-text="num(sentences())"></strong>
+            </div>
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--color-border-light)">
+                <span class="text-sm text-light">Paragraphs</span>
+                <strong class="text-sm" x-text="num(paragraphs())"></strong>
+            </div>
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--color-border-light)">
+                <span class="text-sm text-light">Unique words</span>
+                <strong class="text-sm" x-text="num(uniqueWords())"></strong>
+            </div>
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--color-border-light)">
+                <span class="text-sm text-light">Average word length</span>
+                <strong class="text-sm" x-text="avgWordLength() + ' chars'"></strong>
+            </div>
+            <div class="flex" style="justify-content:space-between; padding:0.4rem 0">
+                <span class="text-sm text-light">Average sentence length</span>
+                <strong class="text-sm" x-text="avgSentenceLength() + ' words'"></strong>
+            </div>
+        </div>
+
+        <div>
+            <div class="text-center mb-4">
+                <p class="text-sm text-light mb-2">Reading time</p>
+                <div class="form-result" x-text="readingTime()"></div>
+                <p class="text-sm text-light mb-2 mt-4">Speaking time</p>
+                <div class="form-result" x-text="speakingTime()"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="wpm">Reading speed (words per minute)</label>
+                <input type="text" id="wpm" x-model="wpm" placeholder="200">
+            </div>
+
+            <div class="form-group">
+                <label for="spm">Speaking speed (words per minute)</label>
+                <input type="text" id="spm" x-model="spm" placeholder="150">
+            </div>
+
+            <div class="form-group">
+                <label for="limit">Character limit (optional)</label>
+                <input type="text" id="limit" x-model="limit" placeholder="e.g. 155 for a meta description">
+                <p class="text-sm mt-2" x-show="hasLimit() &amp;&amp; remaining() >= 0">
+                    <strong x-text="num(remaining())"></strong> characters left.
+                </p>
+                <p class="text-sm mt-2" x-show="hasLimit() &amp;&amp; remaining() &lt; 0">
+                    Over by <strong x-text="num(-remaining())"></strong> characters.
+                </p>
+            </div>
+
+            <button type="button" class="btn btn-sm" x-show="text.length > 0" @click="text = ''">Clear text</button>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this word counter does</h2>
+<p>
+    This is a live word and character counter. Type or paste text into the box and every figure updates immediately:
+    words, characters with and without spaces, sentences, paragraphs, unique words, average word and sentence length,
+    and an estimate of how long the text takes to read or to read aloud. Nothing is submitted anywhere — all the
+    counting happens in JavaScript inside your own browser, so drafts, essays, and client work never leave your machine.
+</p>
+<p>
+    It is built for the moments when a length limit is the whole problem: a 500-word college essay, a 155-character
+    meta description, a 2,000-word article commission, a conference talk that has to fit in ten minutes, or a personal
+    statement with a hard character cap. Set the optional character limit and the tool tells you how much room is left
+    — or how far over you have gone.
+</p>
+
+<h2>How to use it</h2>
+<ol>
+    <li><strong>Paste or type your text.</strong> The counts start updating on the first keystroke; there is no button
+        to press.</li>
+    <li><strong>Read the panel on the left</strong> for structural counts — characters, sentences, paragraphs, and the
+        averages that hint at readability.</li>
+    <li><strong>Adjust the speeds on the right</strong> if the defaults do not match you or your audience. Reading and
+        speaking rates vary a lot between people and between subject matter, so the estimate is only as good as the
+        rate you give it.</li>
+    <li><strong>Set a character limit</strong> if you are writing to a cap, and watch the remaining count.</li>
+</ol>
+
+<h2>How each figure is calculated</h2>
+<ul>
+    <li><strong>Words</strong> — any run of non-whitespace characters counts as one word. So <em>well-known</em> and
+        <em>don't</em> each count as one, and a number like <em>1,250</em> counts as one. This matches how most word
+        processors and submission systems count.</li>
+    <li><strong>Characters (with spaces)</strong> — the raw length of the text, including spaces, tabs, and line
+        breaks. This is usually the number that social platforms and form fields enforce.</li>
+    <li><strong>Characters (no spaces)</strong> — the same total with every whitespace character removed. Some
+        academic and translation briefs use this measure.</li>
+    <li><strong>Sentences</strong> — the text is split on <code>.</code>, <code>!</code>, <code>?</code>, and the
+        ellipsis character, and each remaining chunk that contains something other than whitespace counts as one
+        sentence.</li>
+    <li><strong>Paragraphs</strong> — every line that contains at least one non-whitespace character. Blank lines
+        between paragraphs are ignored, so single-spaced and double-spaced drafts give the same answer.</li>
+    <li><strong>Unique words</strong> — words compared case-insensitively with surrounding punctuation stripped, so
+        <em>The</em>, <em>the</em>, and <em>the,</em> count once between them. Comparing this to the total word count
+        is a quick check for repetitiveness.</li>
+    <li><strong>Reading and speaking time</strong> — words divided by the rate you set, rounded to the nearest second:
+        <strong>minutes = words &divide; words-per-minute</strong>. If you clear the rate or set it to zero, the tool
+        shows a dash rather than an impossible number.</li>
+</ul>
+<p>
+    Sentence detection is deliberately simple, and that is worth knowing. Abbreviations that end in a period — "Dr.
+    Chen", "e.g.", "approx." — are read as sentence endings, so a text full of them will report more sentences than it
+    really has. The average-sentence-length figure inherits the same wobble. Treat both as guidance, not as a
+    measurement.
+</p>
+
+<h2>A worked example</h2>
+<p>
+    Suppose you paste in a blog draft and the tool reports <strong>1,400 words</strong>, 8,120 characters with spaces,
+    <strong>78 sentences</strong>, and 24 paragraphs. At the default reading speed of 200 words per minute the estimate
+    is 1400 &divide; 200 = 7 minutes exactly. Raise the rate to 250 and it drops to 5 min 36 sec; lower it to 150 — a
+    reasonable pace for dense technical material — and it rises to 9 min 20 sec. That spread is the honest range, and
+    it is why the rate is an input rather than a fixed constant.
+</p>
+<p>
+    The averages tell you something too: 1400 words across 78 sentences is roughly 18 words per sentence, which sits in
+    the comfortable range for general web writing. If that number climbed past the high twenties you would be looking
+    at a draft worth breaking up. And if <em>unique words</em> came back at 420 out of 1,400, roughly 30% of the words
+    are distinct — normal for English prose, where function words like <em>the</em>, <em>of</em>, and <em>to</em>
+    repeat constantly.
+</p>
+
+<h2>Choosing a reading speed</h2>
+<p>
+    The 200 words-per-minute default is a deliberately round, conservative figure for silent reading of general prose.
+    A 2019 meta-analysis of reading-rate studies by Marc Brysbaert put average silent reading of English non-fiction at
+    roughly 238 words per minute, and reading aloud at roughly 183 — with wide variation between individuals and text
+    types. Presenters typically speak more slowly than they read aloud in private, which is why the speaking default
+    here is 150. Whatever your audience actually does, change the number: the arithmetic is trivial, and the rate is
+    the part that carries all the uncertainty.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://doi.org/10.1016/j.jml.2019.104047" target="_blank" rel="noopener">Brysbaert, M. (2019). How
+            many words do we read per minute? A review and meta-analysis of reading rate — Journal of Memory and
+            Language</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Words_per_minute" target="_blank" rel="noopener">Words per minute —
+            Wikipedia</a></li>
+    <li><a href="https://www.nngroup.com/articles/how-long-do-users-stay-on-web-pages/" target="_blank"
+            rel="noopener">How Long Do Users Stay on Web Pages? — Nielsen Norman Group</a></li>
+</ul>
+{{end}}
