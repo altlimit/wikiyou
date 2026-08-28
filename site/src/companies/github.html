@@ -1,0 +1,71 @@
+---
+updated: "2026-08-28"
+template: profile.html
+title: GitHub
+description: "GitHub is a web-based platform for software development and version control using Git, hosting millions of software projects."
+category: companies
+category_label: Companies
+type: Subsidiary (Microsoft)
+industry: Software Development Tools
+founded: "2008"
+location: San Francisco, California, United States
+website: "https://github.com"
+founders: Tom Preston-Werner, Chris Wanstrath, PJ Hyett, Scott Chacon
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    GitHub is a web-based platform for software development and version control built on Git, the distributed version
+    control system. It provides hosting for source code repositories along with a set of collaboration tools layered on
+    top of Git's underlying model, allowing developers to work on the same codebase from different locations and
+    reconcile their changes through a shared web interface.
+</p>
+<p>
+    The platform hosts a very large number of software projects, both open-source repositories that anyone can view and
+    contribute to and private repositories restricted to specific individuals or organizations. GitHub is headquartered
+    in San Francisco, California, and operates as a subsidiary of Microsoft.
+</p>
+
+<h2>History</h2>
+<p>
+    GitHub was launched in 2008 by Tom Preston-Werner, Chris Wanstrath, PJ Hyett, and Scott Chacon. The platform arrived
+    at a point when Git was gaining adoption as a distributed version control system, and it paired Git's repository
+    model with a hosted web interface and social collaboration features. Over the following years GitHub grew into a
+    widely used destination for publishing and collaborating on open-source software.
+</p>
+<p>
+    In 2018, GitHub was <strong>acquired by Microsoft</strong>. Following the acquisition, the platform has continued to
+    operate under the GitHub name as a Microsoft subsidiary rather than being folded into an existing product line.
+</p>
+
+<h2>Features</h2>
+<p>
+    GitHub combines repository hosting with tooling intended to support the day-to-day work of software teams:
+</p>
+<ul>
+    <li><strong>Git Repository Hosting</strong> — Remote hosting for Git repositories, giving projects a central
+        location from which contributors can clone, fetch, and push changes.</li>
+    <li><strong>Pull Requests</strong> — A mechanism for proposing changes from one branch or repository to another,
+        where the proposed changes can be discussed and revised before being merged.</li>
+    <li><strong>Code Review</strong> — Tools for reviewing proposed changes, including line-level commentary on
+        differences between versions of a file, so that contributions can be examined before they enter a project's main
+        history.</li>
+    <li><strong>Bug Tracking</strong> — Issue tracking for recording defects, feature requests, and other work items
+        associated with a repository, with discussion threads attached to each item.</li>
+    <li><strong>Project Management</strong> — Features for organizing and tracking work across a repository or across
+        multiple repositories, connecting planned work to the issues and changes that implement it.</li>
+</ul>
+
+<h2>Use and Availability</h2>
+<p>
+    The platform serves both public and private development. Open-source projects use it to publish source code, accept
+    outside contributions, and coordinate maintenance in the open, while companies and individuals use private
+    repositories for work that is not intended for public distribution. Because repositories are backed by Git, projects
+    hosted on the platform retain the full version history in each local clone, independent of the hosting service.
+</p>
+<p>
+    GitHub is accessible through its <a href="https://github.com" target="_blank" rel="noopener">official website</a>,
+    and repositories hosted on it can also be worked with using standard Git clients and command-line tooling.
+</p>
+{{end}}
