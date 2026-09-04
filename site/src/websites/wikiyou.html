@@ -1,0 +1,75 @@
+---
+updated: "2026-09-04"
+template: profile.html
+title: WikiYou
+description: "WikiYou is a free, open-source, community-built encyclopedia covering companies, people, apps, games, websites, and interactive tools."
+subtitle: Open-source community encyclopedia
+category: websites
+category_label: Websites
+type: Open-Source Wiki
+industry: Online Encyclopedia
+website: "https://wikiyou.org"
+github: altlimit/wikiyou
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    WikiYou is a free, open-source online encyclopedia built and maintained by its community. Entries cover companies,
+    people, apps, games, websites, and a section of interactive tools, and are written in a neutral, third-person
+    reference style. The site is free to read, with no account required to browse its content.
+</p>
+<p>
+    Unlike encyclopedias that run on a database-backed wiki engine, <a href="https://wikiyou.org" target="_blank"
+        rel="noopener">WikiYou</a> is published as a static website. Each entry exists as a source file in a public
+    repository and is rendered into a plain HTML page ahead of time rather than assembled on request, an approach that
+    keeps the delivered pages lightweight and the underlying content easy to inspect. The project is maintained by
+    Altlimit LLC.
+</p>
+
+<h2>Categories</h2>
+<p>
+    Content on WikiYou is organized into six top-level categories, each collecting entries of a single kind:
+</p>
+<ul>
+    <li><strong>Companies</strong> — Profiles of businesses and organizations.</li>
+    <li><strong>People</strong> — Biographical entries.</li>
+    <li><strong>Apps</strong> — Entries on software applications and online services.</li>
+    <li><strong>Games</strong> — Entries on video games and related titles.</li>
+    <li><strong>Websites</strong> — Entries on notable sites and web properties.</li>
+    <li><strong>Tools</strong> — A section that differs from the rest of the site: instead of reference articles, it
+        holds free interactive calculators and utilities that run entirely in the visitor's browser.</li>
+</ul>
+<p>
+    Because the tools are client-side, they execute locally in the browser rather than sending input to a server for
+    processing. They are offered free of charge alongside the encyclopedia's written entries.
+</p>
+
+<h2>How It Is Built</h2>
+<p>
+    WikiYou is generated with <a href="https://github.com/altlimit/sitegen" target="_blank" rel="noopener">SiteGen</a>,
+    an open-source static site generator also maintained by Altlimit LLC. Entries are authored as source files carrying
+    the page's text along with structured metadata — such as its title, category, and description — which the generator
+    uses to build the finished pages, category listings, and navigation for the site.
+</p>
+<p>
+    The static output means the published site consists of ordinary HTML files. There is no server-side application
+    rendering pages for visitors, and the full contents of the encyclopedia can be reviewed by reading the repository
+    directly.
+</p>
+
+<h2>Contributing</h2>
+<p>
+    The source of WikiYou is public on <a href="https://github.com/altlimit/wikiyou" target="_blank"
+        rel="noopener">GitHub</a>, and the project is open to outside contributions. Anyone may add a new entry or
+    improve an existing one by opening a pull request against the repository, following the same process used for
+    contributing to other open-source software projects. Proposed changes are reviewed before being merged and published
+    to the live site.
+</p>
+<p>
+    This model places the encyclopedia's editorial history in the repository's version control record, where each change
+    is attributable to a specific contribution and earlier revisions of an entry remain retrievable. Contributions are
+    expected to match the site's existing conventions: factual, neutral, third-person prose consistent with the
+    encyclopedic style used throughout its entries.
+</p>
+{{end}}
