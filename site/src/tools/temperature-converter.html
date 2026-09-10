@@ -1,0 +1,222 @@
+---
+updated: "2026-09-10"
+template: tool.html
+title: Temperature Converter
+description: "Convert temperatures between Celsius, Fahrenheit and Kelvin instantly. Type a value in any field and the other two update live, negatives and decimals included."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function tempConv() {
+        return {
+            c: "20",
+            f: "68",
+            k: "293.15",
+            // Which field the visitor typed in last — the other two are derived from it.
+            active: "c",
+            // Parse loosely so half-typed values like "-" or "1." don't flash NaN.
+            num: function (v) {
+                var s = String(v).replace(/\s+/g, "");
+                if (s === "" || s === "-" || s === "+" || s === "." || s === "-." || s === "+.") return null;
+                var n = Number(s);
+                return isFinite(n) ? n : null;
+            },
+            // 6 decimals kills float noise (33.79999999999999 -> 33.8) without losing precision.
+            fmt: function (n) {
+                if (!isFinite(n)) return "";
+                var r = Math.round(n * 1e6) / 1e6;
+                if (r === 0) r = 0;
+                return String(r);
+            },
+            from: function (unit, raw) {
+                this.active = unit;
+                this[unit] = raw;
+                var n = this.num(raw);
+                if (n === null) {
+                    if (unit !== "c") this.c = "";
+                    if (unit !== "f") this.f = "";
+                    if (unit !== "k") this.k = "";
+                    return;
+                }
+                var cel = unit === "f" ? (n - 32) * 5 / 9 : (unit === "k" ? n - 273.15 : n);
+                if (unit !== "c") this.c = this.fmt(cel);
+                if (unit !== "f") this.f = this.fmt(cel * 9 / 5 + 32);
+                if (unit !== "k") this.k = this.fmt(cel + 273.15);
+            },
+            // Canonical Celsius value, taken from whichever field is being edited.
+            cel: function () {
+                var n = this.num(this[this.active]);
+                if (n === null) return null;
+                if (this.active === "f") return (n - 32) * 5 / 9;
+                if (this.active === "k") return n - 273.15;
+                return n;
+            },
+            // Readout rounded to 1 decimal; em dash when there is nothing to show.
+            round1: function (unit) {
+                var cel = this.cel();
+                if (cel === null) return "—";
+                var v = unit === "f" ? cel * 9 / 5 + 32 : (unit === "k" ? cel + 273.15 : cel);
+                if (!isFinite(v)) return "—";
+                var r = Math.round(v * 10) / 10;
+                if (r === 0) r = 0;
+                return r.toFixed(1);
+            },
+            belowAbsoluteZero: function () {
+                var cel = this.cel();
+                return cel !== null && cel < -273.15 - 1e-9;
+            },
+            note: function () {
+                var cel = this.cel();
+                if (cel === null || this.belowAbsoluteZero()) return "";
+                if (cel <= -273.14) return "Absolute zero — the coldest temperature physically possible.";
+                if (cel >= 36 && cel <= 38) return "Around normal human body temperature (about 37 °C / 98.6 °F).";
+                if (cel >= 100) return "At or above the boiling point of water at standard sea-level pressure (100 °C / 212 °F).";
+                if (cel <= 0) return "At or below the freezing point of water (0 °C / 32 °F).";
+                return "";
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="tempConv()" class="grid-2" style="margin:0" onsubmit="return false">
+    <div>
+        <div class="form-group">
+            <label for="celsius">Celsius (°C)</label>
+            <input type="text" id="celsius" inputmode="decimal" autocomplete="off" placeholder="20" :value="c"
+                @input="from('c', $event.target.value)">
+        </div>
+
+        <div class="form-group">
+            <label for="fahrenheit">Fahrenheit (°F)</label>
+            <input type="text" id="fahrenheit" inputmode="decimal" autocomplete="off" placeholder="68" :value="f"
+                @input="from('f', $event.target.value)">
+        </div>
+
+        <div class="form-group">
+            <label for="kelvin">Kelvin (K)</label>
+            <input type="text" id="kelvin" inputmode="decimal" autocomplete="off" placeholder="293.15" :value="k"
+                @input="from('k', $event.target.value)">
+        </div>
+
+        <p class="text-xs text-muted">Type in any one field and the other two update instantly. Negative values and
+            decimals are fine — nothing you enter leaves your browser.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Celsius</p>
+            <div class="form-result" x-text="round1('c') + ' °C'"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Fahrenheit</p>
+            <div class="form-result" x-text="round1('f') + ' °F'"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Kelvin</p>
+            <div class="form-result" x-text="round1('k') + ' K'"></div>
+
+            <p class="text-sm mt-4" x-show="belowAbsoluteZero()" style="color:var(--color-link)">
+                That is colder than absolute zero (−273.15 °C / −459.67 °F / 0 K), so it cannot occur in nature.
+            </p>
+            <p class="text-sm mt-4" x-show="!belowAbsoluteZero() &amp;&amp; note() !== ''" x-text="note()"></p>
+            <p class="text-xs text-muted mt-4">Readout rounded to 1 decimal place; the fields above keep full
+                precision.</p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this temperature converter does</h2>
+<p>
+    This tool converts a temperature between the three scales in everyday and scientific use: <strong>Celsius</strong>
+    (°C), used by most of the world and by science teaching; <strong>Fahrenheit</strong> (°F), used mainly in the United
+    States and a handful of its territories; and <strong>kelvin</strong> (K), the SI base unit of thermodynamic
+    temperature. All three fields are live inputs, so you can start from whichever scale your source uses — a recipe in
+    Fahrenheit, a weather forecast in Celsius, or a physics problem in kelvin — and read the equivalents immediately.
+</p>
+<p>
+    Everything is calculated in your browser with plain JavaScript. There is no server call, no stored history, and no
+    tracking of what you convert.
+</p>
+
+<h2>How to use it</h2>
+<p>
+    Click into the Celsius, Fahrenheit, or Kelvin box and type a value. The other two fields recalculate as you type,
+    and the panel on the right repeats all three rounded to one decimal place, which is usually the sensible precision
+    for weather, cooking, and health readings. Negative numbers and decimals both work: <code>-12.5</code> is a valid
+    Celsius entry. If you clear a field or leave it partially typed (just a minus sign, say), the other fields blank out
+    rather than showing <code>NaN</code>. Enter a temperature colder than absolute zero and the tool tells you so
+    instead of pretending the number is physical.
+</p>
+
+<h2>The formulas</h2>
+<p>
+    Celsius and Fahrenheit have different zero points <em>and</em> different degree sizes: one Celsius degree equals
+    exactly 1.8 Fahrenheit degrees. Kelvin shares Celsius's degree size but starts at absolute zero, so converting
+    between them is a simple offset of 273.15.
+</p>
+<ul>
+    <li><strong>Celsius to Fahrenheit:</strong> °F = (°C × 9/5) + 32</li>
+    <li><strong>Fahrenheit to Celsius:</strong> °C = (°F − 32) × 5/9</li>
+    <li><strong>Celsius to kelvin:</strong> K = °C + 273.15</li>
+    <li><strong>Kelvin to Celsius:</strong> °C = K − 273.15</li>
+    <li><strong>Fahrenheit to kelvin:</strong> K = ((°F − 32) × 5/9) + 273.15</li>
+    <li><strong>Kelvin to Fahrenheit:</strong> °F = ((K − 273.15) × 9/5) + 32</li>
+</ul>
+<p>
+    Internally the converter always routes through Celsius: it turns your input into a Celsius value first, then
+    produces the other two from it. That keeps the three fields mathematically consistent no matter which one you typed
+    in, and avoids the rounding drift you get from chaining Fahrenheit straight into kelvin.
+</p>
+<p>
+    Note that kelvin values are written without a degree symbol and without the word "degrees" — 300 K is read as
+    "three hundred kelvin". Kelvin is also never negative, because 0 K <em>is</em> the bottom of the scale.
+</p>
+
+<h2>A worked example</h2>
+<p>
+    Suppose a US recipe calls for an oven at <strong>350 °F</strong> and your oven dial is in Celsius. Subtract 32 to
+    remove the offset: 350 − 32 = 318. Multiply by 5/9 to rescale the degrees: 318 × 5/9 = 176.666… So 350 °F is about
+    <strong>176.7 °C</strong>, which in practice means setting the dial to 175 or 180 °C. To express the same
+    temperature in kelvin, add 273.15: 176.67 + 273.15 ≈ <strong>449.8 K</strong>.
+</p>
+<p>
+    Going the other way: normal human body temperature of <strong>37 °C</strong> becomes (37 × 9/5) + 32 = 66.6 + 32 =
+    <strong>98.6 °F</strong>, or 37 + 273.15 = <strong>310.15 K</strong>.
+</p>
+
+<h2>Reference points worth memorising</h2>
+<ul>
+    <li><strong>Absolute zero:</strong> 0 K = −273.15 °C = −459.67 °F</li>
+    <li><strong>Water freezes:</strong> 273.15 K = 0 °C = 32 °F</li>
+    <li><strong>Comfortable room temperature:</strong> ~293 K = 20 °C = 68 °F</li>
+    <li><strong>Body temperature:</strong> ~310.15 K = 37 °C = 98.6 °F</li>
+    <li><strong>Water boils at sea level:</strong> 373.15 K = 100 °C = 212 °F</li>
+    <li><strong>The crossover point:</strong> −40 °C = −40 °F, the one temperature where both scales agree</li>
+</ul>
+<p>
+    For rough mental arithmetic in the field, doubling Celsius and adding 30 gets you within a couple of degrees of the
+    Fahrenheit value across normal weather temperatures (20 °C → about 70 °F, actual 68 °F). Use the exact formula
+    above, or this tool, whenever the difference matters — cooking, medicine, and lab work all care about that couple of
+    degrees.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Celsius" target="_blank" rel="noopener">Celsius — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Kelvin" target="_blank" rel="noopener">Kelvin — Wikipedia</a></li>
+    <li><a href="https://www.nist.gov/pml/owm/si-units-temperature" target="_blank" rel="noopener">SI Units —
+            Temperature (NIST)</a></li>
+</ul>
+{{end}}
