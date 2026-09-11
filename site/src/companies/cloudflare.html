@@ -1,0 +1,79 @@
+---
+updated: "2026-09-11"
+template: profile.html
+title: Cloudflare
+description: "Cloudflare is an American company that provides content delivery network, internet security, and distributed DNS services."
+category: companies
+category_label: Companies
+type: Public Company
+industry: Web Infrastructure / Security
+founded: "2009"
+location: San Francisco, California, United States
+website: "https://www.cloudflare.com"
+founders: Matthew Prince, Lee Holloway, Michelle Zatlyn
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    Cloudflare, Inc. is an American company that provides content delivery network (CDN) services, internet security,
+    distributed denial-of-service (DDoS) mitigation, and distributed DNS. The company is headquartered in San Francisco,
+    California, and is publicly traded on the New York Stock Exchange under the ticker symbol <strong>NET</strong>.
+</p>
+<p>
+    Cloudflare's services are positioned between website visitors and the hosting providers that serve those websites.
+    Rather than replacing a site's origin server, the company's network sits in front of it, handling incoming requests
+    before they reach the origin. This intermediary position is what allows the same infrastructure to address
+    performance, reliability, and security together: content can be served closer to the visitor, unwanted traffic can be
+    filtered out before it consumes origin resources, and requests can continue to be handled even when the origin is
+    under strain.
+</p>
+
+<h2>History</h2>
+<p>
+    Cloudflare was founded in 2009 by <strong>Matthew Prince</strong>, <strong>Lee Holloway</strong>, and
+    <strong>Michelle Zatlyn</strong>. The company established its headquarters in San Francisco, California, where it
+    remains based. Cloudflare later became a publicly traded company, with its shares listed on the New York Stock
+    Exchange under the symbol NET.
+</p>
+
+<h2>Services</h2>
+<p>
+    Cloudflare's offerings center on infrastructure that operates between end users and the servers hosting the content
+    they request. Its principal service areas include:
+</p>
+<ul>
+    <li><strong>Content Delivery Network</strong> — A CDN that distributes and serves website content, reducing the
+        distance and number of requests between visitors and origin hosting providers in order to improve loading
+        performance.</li>
+    <li><strong>Internet Security</strong> — Security services applied to traffic as it passes through the network,
+        intended to protect websites and the infrastructure behind them from malicious requests.</li>
+    <li><strong>DDoS Mitigation</strong> — Protection against distributed denial-of-service attacks, in which large
+        volumes of traffic are directed at a target in an attempt to overwhelm it and make it unavailable. Because
+        Cloudflare's network receives requests before the origin does, attack traffic can be absorbed or filtered
+        upstream of the customer's own servers.</li>
+    <li><strong>Distributed DNS</strong> — Authoritative Domain Name System service operated across a distributed
+        infrastructure, resolving domain names to the addresses of the servers that answer for them.</li>
+</ul>
+
+<h2>How It Works</h2>
+<p>
+    A site using Cloudflare directs its DNS records to the company's network, so that requests from visitors arrive at
+    Cloudflare rather than at the origin host directly. From that vantage point the service can return cached content
+    without contacting the origin, apply security policies to the request, and decide whether the traffic should be
+    passed through at all. The origin hosting provider continues to store and generate the underlying content; what
+    changes is the path that visitor traffic takes to reach it.
+</p>
+<p>
+    This arrangement is the common thread across the company's product areas. Performance improvements, reliability
+    benefits, and security filtering all derive from the same structural fact — that the network handles requests before
+    they arrive at their destination.
+</p>
+
+<h2>Corporate Information</h2>
+<p>
+    Cloudflare is a public company whose stock trades on the New York Stock Exchange under the ticker NET. Further
+    information about the company and its services is available on its <a href="https://www.cloudflare.com"
+        target="_blank" rel="noopener">official website</a>.
+</p>
+{{end}}
