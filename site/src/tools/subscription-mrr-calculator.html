@@ -1,0 +1,229 @@
+---
+updated: "2026-09-24"
+template: tool.html
+title: MRR & ARR Calculator
+description: "Calculate monthly and annual recurring revenue from your subscriber count and average plan price, and project MRR 12 months out with churn and growth."
+category: tools
+category_label: Tools
+og_type: article
+promo_text: "Selling subscriptions? ShopsWired has native recurring billing built in — no third-party app required."
+promo_link: "https://www.shopswired.com"
+promo_link_text: "See ShopsWired"
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function mrrCalc() {
+        return {
+            subs: 250,
+            price: 29,
+            churn: 3,
+            newSubs: 20,
+            num: function (v) {
+                var n = Number(v);
+                if (!isFinite(n) || n < 0) return 0;
+                return n;
+            },
+            churnRate: function () {
+                var c = this.num(this.churn);
+                return c > 100 ? 100 : c;
+            },
+            mrr: function () {
+                return this.num(this.subs) * this.num(this.price);
+            },
+            arr: function () {
+                return this.mrr() * 12;
+            },
+            // Each month: keep the subscribers who didn't churn, then add new ones.
+            projectedSubs: function () {
+                var s = this.num(this.subs);
+                var keep = 1 - (this.churnRate() / 100);
+                var add = this.num(this.newSubs);
+                for (var i = 0; i < 12; i++) {
+                    s = (s * keep) + add;
+                }
+                return s;
+            },
+            projectedMrr: function () {
+                return this.projectedSubs() * this.num(this.price);
+            },
+            mrrChange: function () {
+                return this.projectedMrr() - this.mrr();
+            },
+            mrrChangePct: function () {
+                var base = this.mrr();
+                if (base <= 0) return null;
+                return (this.mrrChange() / base) * 100;
+            },
+            churnedPerMonth: function () {
+                return this.num(this.subs) * (this.churnRate() / 100);
+            },
+            fmt: function (n) {
+                var v = Number(n);
+                if (!isFinite(v)) v = 0;
+                return "$" + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            fmtNum: function (n) {
+                var v = Number(n);
+                if (!isFinite(v)) v = 0;
+                return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            fmtPct: function (n) {
+                if (n === null) return "";
+                var v = Number(n);
+                if (!isFinite(v)) return "";
+                return (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="mrrCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="subs">Current Paying Subscribers</label>
+            <input type="text" id="subs" x-model="subs" placeholder="250">
+        </div>
+
+        <div class="form-group">
+            <label for="price">Average Monthly Price per Subscriber ($)</label>
+            <input type="text" id="price" x-model="price" placeholder="29">
+        </div>
+
+        <div class="form-group">
+            <label for="churn">Monthly Churn Rate (%) — optional</label>
+            <input type="text" id="churn" x-model="churn" placeholder="3">
+        </div>
+
+        <div class="form-group">
+            <label for="newSubs">New Subscribers per Month — optional</label>
+            <input type="text" id="newSubs" x-model="newSubs" placeholder="20">
+        </div>
+
+        <p class="text-xs text-muted">Use your blended average revenue per subscriber if you sell multiple plans.
+            Annual plans should be divided by 12 before they go into the average. Leave churn and new subscribers at 0
+            to see MRR and ARR as they stand today.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Current MRR</p>
+            <div class="form-result" x-text="fmt(mrr())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">ARR (MRR &times; 12)</p>
+            <div class="form-result" x-text="fmt(arr())"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Projected MRR in 12 months</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="fmt(projectedMrr())"></div>
+
+            <p class="text-sm mt-4">
+                <span x-text="fmtNum(projectedSubs())"></span> subscribers projected
+                <span x-show="mrrChangePct() !== null">
+                    (<span x-text="fmtPct(mrrChangePct())"></span> MRR)
+                </span>
+            </p>
+            <p class="text-sm text-light mt-2" x-show="churnedPerMonth() > 0">
+                At this churn rate you lose about <strong x-text="fmtNum(churnedPerMonth())"></strong> subscribers in
+                the first month — roughly <strong x-text="fmt(churnedPerMonth() * num(price))"></strong> of MRR to
+                replace before you grow at all.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this calculator does</h2>
+<p>
+    This tool turns two simple numbers — how many paying subscribers you have and what they pay per month on average —
+    into the two headline metrics every subscription business is measured on: <strong>MRR</strong> (monthly recurring
+    revenue) and <strong>ARR</strong> (annual recurring revenue). Add an optional churn rate and a monthly signup
+    number, and it also projects where your MRR lands twelve months from now. Everything is calculated in your browser;
+    nothing you type is sent anywhere or stored.
+</p>
+
+<h2>MRR vs ARR — what is the difference?</h2>
+<p>
+    <strong>MRR</strong> is the predictable revenue your subscriptions generate in a single month. It is the working
+    number for operators: it moves every month, it reacts quickly to churn and new signups, and it is what you compare
+    against monthly costs like payroll and hosting.
+</p>
+<p>
+    <strong>ARR</strong> is simply MRR multiplied by 12 — the same revenue expressed on an annual run rate. It is the
+    number used in board decks, investor conversations and valuation multiples, because it smooths out monthly noise
+    and makes companies of different sizes easier to compare. ARR is <em>not</em> the revenue you booked over the last
+    twelve months; it is a forward-looking run rate that assumes today's recurring revenue continues for a year.
+</p>
+<p>
+    A common mistake is mixing one-off revenue into either figure. Setup fees, professional services, hardware sales
+    and usage overages are real revenue, but they are not <em>recurring</em>, so they do not belong in MRR or ARR. If
+    you sell annual plans, divide the annual price by 12 to get its monthly contribution rather than booking the whole
+    amount in the month it was paid.
+</p>
+
+<h2>The formulas</h2>
+<ul>
+    <li><strong>MRR</strong> = subscribers &times; average monthly price per subscriber</li>
+    <li><strong>ARR</strong> = MRR &times; 12</li>
+    <li><strong>Subscribers next month</strong> = subscribers &times; (1 &minus; monthly churn rate) + new subscribers</li>
+    <li><strong>Projected MRR</strong> = the subscriber formula applied 12 times, then multiplied by the monthly price</li>
+</ul>
+<p>
+    The average monthly price per subscriber is also called <strong>ARPU</strong> (average revenue per user). If you
+    sell several plans, calculate it as total MRR divided by total paying subscribers rather than averaging the list
+    prices — discounts and plan mix matter.
+</p>
+<p>
+    The projection compounds month by month, which is why churn hurts far more than it looks. Churn is applied to your
+    whole remaining base each month, while new signups are added as a flat number. The two cancel out at an equilibrium
+    of <em>new subscribers &divide; churn rate</em> — for example, 20 signups a month against 3% churn settles at
+    roughly 667 subscribers no matter how long you wait.
+</p>
+
+<h2>How to use it</h2>
+<ol>
+    <li>Enter the number of subscribers who are actually paying you today. Exclude free trials, free plans and
+        delinquent accounts you have not collected from.</li>
+    <li>Enter the average monthly price you collect per subscriber, net of ongoing discounts.</li>
+    <li>Optionally enter your monthly churn rate — the percentage of subscribers who cancel in a typical month — and
+        how many new subscribers you add per month.</li>
+    <li>Read MRR, ARR and the 12-month projection on the right. Change one input at a time to see which lever moves the
+        projection most.</li>
+</ol>
+
+<h2>Worked example</h2>
+<p>
+    Suppose you have <strong>250</strong> subscribers paying an average of <strong>$29</strong> per month. Your MRR is
+    250 &times; $29 = <strong>$7,250</strong>, and your ARR is $7,250 &times; 12 = <strong>$87,000</strong>.
+</p>
+<p>
+    Now add a <strong>3%</strong> monthly churn rate and <strong>20</strong> new subscribers per month. In month one
+    you lose about 7 subscribers and gain 20, ending at roughly 262. Repeat that twelve times and you finish the year
+    at about <strong>425</strong> subscribers — an MRR of roughly <strong>$12,300</strong>, or around $148,000 ARR.
+</p>
+<p>
+    The instructive part is what happens when you change one number. Cutting churn from 3% to 1.5% while keeping the
+    same 20 signups per month pushes the 12-month figure well past 460 subscribers, and it keeps climbing afterwards
+    because the equilibrium point has doubled. Raising the average price by a few dollars lifts MRR immediately across
+    the entire base. Both usually cost less than doubling acquisition spend.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Churn_rate" target="_blank" rel="noopener">Churn Rate —
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Customer_lifetime_value" target="_blank" rel="noopener">Customer Lifetime
+            Value — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Software_as_a_service" target="_blank" rel="noopener">Software as a
+            Service — Wikipedia</a></li>
+</ul>
+{{end}}
