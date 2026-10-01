@@ -1,0 +1,207 @@
+---
+updated: "2026-10-01"
+template: tool.html
+title: Average Order Value (AOV) Calculator
+description: "Calculate your average order value and see how small AOV increases compound into big revenue gains."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function aovCalc() {
+        return {
+            revenue: 50000,
+            orders: 625,
+            uplift: 10,
+            num: function (v) {
+                var n = Number(v);
+                return isFinite(n) ? n : 0;
+            },
+            valid: function () {
+                return this.num(this.orders) > 0 && this.num(this.revenue) > 0;
+            },
+            aov: function () {
+                if (!this.valid()) return 0;
+                return this.num(this.revenue) / this.num(this.orders);
+            },
+            upliftPct: function () {
+                return this.num(this.uplift);
+            },
+            newAov: function () {
+                return this.aov() * (1 + this.upliftPct() / 100);
+            },
+            projectedRevenue: function () {
+                return this.num(this.revenue) * (1 + this.upliftPct() / 100);
+            },
+            extraRevenue: function () {
+                return this.projectedRevenue() - this.num(this.revenue);
+            },
+            fmt: function (n) {
+                if (!this.valid()) return "—";
+                var v = this.num(n);
+                var sign = v < 0 ? "-" : "";
+                return sign + "$" + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            fmtInt: function (n) {
+                if (!this.valid()) return "—";
+                return Math.round(this.num(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="aovCalc()" class="grid-2" style="margin:0">
+    <div>
+        <div class="form-group">
+            <label for="revenue">Total Revenue ($)</label>
+            <input type="text" id="revenue" x-model="revenue" placeholder="50000">
+        </div>
+
+        <div class="form-group">
+            <label for="orders">Number of Orders</label>
+            <input type="text" id="orders" x-model="orders" placeholder="625">
+        </div>
+
+        <div class="form-group">
+            <label for="uplift">Target AOV Uplift (%) — optional</label>
+            <input type="text" id="uplift" x-model="uplift" placeholder="10">
+        </div>
+
+        <p class="text-xs text-muted">Use revenue and orders from the same period — one month, one quarter, one
+            year. Whatever period you enter is the period the projection applies to. Everything is calculated in
+            your browser; nothing is uploaded.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Average Order Value</p>
+            <div class="form-result" x-text="fmt(aov())"></div>
+
+            <template x-if="valid() && upliftPct() !== 0">
+                <div>
+                    <p class="text-sm text-light mb-2 mt-4">AOV after
+                        <span x-text="upliftPct() + '%'"></span> change
+                    </p>
+                    <div class="form-result" style="color:var(--color-link)" x-text="fmt(newAov())"></div>
+
+                    <p class="text-sm text-light mb-2 mt-4">Projected revenue (same order count)</p>
+                    <div class="form-result" x-text="fmt(projectedRevenue())"></div>
+
+                    <p class="text-sm mt-4" x-show="extraRevenue() > 0">
+                        That's <strong x-text="fmt(extraRevenue())"></strong> in extra revenue from the same
+                        <span x-text="fmtInt(orders)"></span> orders — no new traffic required.
+                    </p>
+                    <p class="text-sm mt-4" x-show="extraRevenue() < 0">
+                        That's <strong x-text="fmt(Math.abs(extraRevenue()))"></strong> less revenue from the same
+                        <span x-text="fmtInt(orders)"></span> orders.
+                    </p>
+                </div>
+            </template>
+
+            <p class="text-sm text-light mt-4" x-show="!valid()">
+                Enter revenue greater than 0 and at least 1 order to see your AOV.
+            </p>
+            <p class="text-sm text-light mt-4" x-show="valid() && upliftPct() === 0">
+                Add a target uplift percentage to see what a higher AOV would be worth.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is average order value?</h2>
+<p>
+    <strong>Average order value (AOV)</strong> is the average amount a customer spends in a single order. It is one of
+    the three levers that determine ecommerce revenue — traffic, conversion rate, and AOV — and it is usually the
+    cheapest of the three to move. Buying more traffic costs money on every click. Lifting conversion rate means
+    winning over people who have already decided not to buy. Lifting AOV means persuading someone who is <em>already
+    checking out</em> to add a little more to the cart, which is why bundles, volume discounts, free-shipping
+    thresholds, and post-purchase upsells are such common tactics.
+</p>
+<p>
+    AOV also sets the ceiling on what you can afford to pay to acquire a customer. If your AOV is $80 and your gross
+    margin is 40%, each order contributes about $32 before overhead — so a $40 cost per acquisition loses money. Raise
+    AOV to $100 at the same margin and that same $40 CPA becomes profitable. This is why AOV shows up in nearly every
+    paid-acquisition model.
+</p>
+
+<h2>The AOV formula</h2>
+<p>
+    <strong>AOV = Total Revenue ÷ Number of Orders</strong>
+</p>
+<p>
+    That is deliberately simple, but the inputs need care:
+</p>
+<ul>
+    <li><strong>Same period for both numbers.</strong> Monthly revenue divided by annual orders produces a meaningless
+        figure. Pick one window and use it for both.</li>
+    <li><strong>Orders, not customers, and not units.</strong> One customer who buys three times in a month is three
+        orders. One order containing four items is still one order.</li>
+    <li><strong>Be consistent about what revenue includes.</strong> Most teams use net product revenue — after
+        discounts and refunds, excluding shipping charges and sales tax. Including shipping and tax inflates AOV and
+        makes it incomparable to industry figures or to your own past numbers.</li>
+</ul>
+<p>
+    The projection in this calculator applies your target uplift to AOV while holding order count constant:
+    <strong>Projected Revenue = Total Revenue × (1 + uplift ÷ 100)</strong>, and
+    <strong>Extra Revenue = Projected Revenue − Total Revenue</strong>. Holding orders constant is the point — it
+    isolates the value of the AOV change itself, with no assumption that you also found more customers.
+</p>
+
+<h2>How to use this calculator</h2>
+<p>
+    Enter the total revenue for a period and the number of orders in that same period. The calculator shows your AOV
+    immediately. Then enter a target uplift percentage — the improvement you think a bundle, a threshold, or a cross-sell
+    could realistically produce — and you will see the new AOV, the projected revenue at the same order volume, and the
+    extra revenue that change is worth. You can enter a negative uplift to model a decline, which is useful when
+    weighing a discount campaign that may raise order count but drag AOV down.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Suppose a store did <strong>$50,000</strong> in revenue across <strong>625 orders</strong> last month. AOV is
+    $50,000 ÷ 625 = <strong>$80.00</strong>.
+</p>
+<p>
+    The store sets a free-shipping threshold at $95 and adds a single cross-sell on the cart page, aiming for a
+    <strong>10%</strong> AOV lift. If it works and order count holds steady, AOV becomes $88.00, revenue becomes
+    $55,000, and the extra revenue is <strong>$5,000 per month</strong> — roughly $60,000 a year from the same number
+    of customers. At a 40% gross margin that is about $2,000 a month in additional gross profit, with no extra ad spend
+    attached to it.
+</p>
+<p>
+    The honest caveat: an AOV lift is a hypothesis until you measure it. Free-shipping thresholds can suppress orders
+    from small-basket shoppers, and aggressive upsells can hurt conversion. Track AOV alongside conversion rate and
+    total revenue, not on its own — a rising AOV with falling order count can leave you flat or worse. Comparing a
+    period before and after a change, or running a proper A/B test, tells you what actually happened.
+</p>
+
+<h2>A note on benchmarks</h2>
+<p>
+    Published AOV benchmarks vary enormously by category — a furniture store and a cosmetics store have almost nothing
+    in common on this metric — and they also drift by season and by traffic source. Your own trailing AOV is a far more
+    useful baseline than any industry average, so this calculator deliberately does not compare you to one.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Average_order_value" target="_blank" rel="noopener">Average order value —
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Conversion_rate_optimization" target="_blank" rel="noopener">Conversion
+            rate optimization — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Customer_lifetime_value" target="_blank" rel="noopener">Customer lifetime
+            value — Wikipedia</a></li>
+</ul>
+{{end}}
