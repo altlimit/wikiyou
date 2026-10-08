@@ -1,0 +1,371 @@
+---
+updated: "2026-10-08"
+template: tool.html
+title: URL Slug Generator
+description: "Turn any title into a clean, SEO-friendly URL slug — lowercase, hyphenated and safe. Strips accents and optional stop words, right in your browser."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function slugGen() {
+        return {
+            text: "The 10 Best Coffee Shops in São Paulo — A Café Lover's Guide!",
+            separator: "-",
+            lowercase: true,
+            stripStopWords: false,
+            expandSymbols: true,
+            maxLength: 0,
+            copied: false,
+            // Common English stop words. Short, deliberate list: only words that
+            // carry no search meaning on their own.
+            stopWords: [
+                "a", "an", "and", "are", "as", "at", "be", "been", "but", "by",
+                "for", "from", "in", "into", "is", "it", "its", "of", "on", "or",
+                "that", "the", "their", "then", "there", "these", "this", "to",
+                "was", "were", "will", "with"
+            ],
+            // Letters that Unicode NFD cannot split into base + combining accent,
+            // plus a few currency symbols worth keeping as words.
+            extraMap: {
+                "ß": "ss", "æ": "ae", "Æ": "AE",
+                "œ": "oe", "Œ": "OE", "ø": "o", "Ø": "O",
+                "ð": "d", "Ð": "D", "đ": "d", "Đ": "D",
+                "þ": "th", "Þ": "TH", "ł": "l", "Ł": "L",
+                "ı": "i", "€": "euro", "£": "gbp", "¥": "yen"
+            },
+            // Fold accented letters down to plain ASCII so the slug stays safe in
+            // any URL. Uses String.normalize where the browser provides it.
+            fold: function (s) {
+                var out = "";
+                for (var i = 0; i < s.length; i++) {
+                    var ch = s.charAt(i);
+                    out += this.extraMap[ch] !== undefined ? this.extraMap[ch] : ch;
+                }
+                if (typeof "".normalize === "function") {
+                    out = out.normalize("NFD").replace(/[̀-ͯ]/g, "");
+                }
+                return out;
+            },
+            sep: function () {
+                return this.separator === "none" ? "" : this.separator;
+            },
+            limit: function () {
+                var n = Math.floor(Number(this.maxLength));
+                if (!isFinite(n) || n <= 0) return 0;
+                return n > 300 ? 300 : n;
+            },
+            slugify: function (input) {
+                var s = String(input == null ? "" : input);
+                s = this.fold(s);
+                if (this.expandSymbols) {
+                    s = s.replace(/&/g, " and ")
+                        .replace(/@/g, " at ")
+                        .replace(/%/g, " percent ")
+                        .replace(/\+/g, " plus ");
+                }
+                // Drop apostrophes and quotes so "lover's" becomes "lovers",
+                // not "lover-s".
+                s = s.replace(/['‘’ʼ"“”]/g, "");
+                if (this.lowercase) s = s.toLowerCase();
+                // Everything that is not a letter or digit becomes one separator.
+                var parts = s.split(/[^A-Za-z0-9]+/);
+                var words = [];
+                var i;
+                for (i = 0; i < parts.length; i++) {
+                    if (parts[i] !== "") words.push(parts[i]);
+                }
+                if (this.stripStopWords) {
+                    var kept = [];
+                    for (i = 0; i < words.length; i++) {
+                        if (this.stopWords.indexOf(words[i].toLowerCase()) === -1) kept.push(words[i]);
+                    }
+                    // Never return nothing: a title made only of stop words keeps
+                    // its words rather than collapsing to an empty slug.
+                    if (kept.length > 0) words = kept;
+                }
+                var sep = this.sep();
+                var slug = words.join(sep);
+                var max = this.limit();
+                if (max > 0 && slug.length > max) {
+                    slug = slug.slice(0, max);
+                    if (sep !== "") {
+                        var cut = slug.lastIndexOf(sep);
+                        // Cut back to a word boundary, but only if that leaves
+                        // something behind.
+                        if (cut > 0) slug = slug.slice(0, cut);
+                        if (slug.slice(-sep.length) === sep) {
+                            slug = slug.slice(0, slug.length - sep.length);
+                        }
+                    }
+                }
+                return slug;
+            },
+            lines: function () {
+                var raw = String(this.text || "").split(/\r?\n/);
+                var out = [];
+                for (var i = 0; i < raw.length; i++) {
+                    if (raw[i].replace(/\s+/g, "") === "") continue;
+                    var slug = this.slugify(raw[i]);
+                    if (slug !== "") out.push(slug);
+                }
+                return out;
+            },
+            output: function () {
+                return this.lines().join("\n");
+            },
+            first: function () {
+                var l = this.lines();
+                return l.length > 0 ? l[0] : "";
+            },
+            count: function () {
+                return this.lines().length;
+            },
+            firstLength: function () {
+                return this.first().length;
+            },
+            wordCount: function () {
+                var f = this.first();
+                if (f === "") return 0;
+                var sep = this.sep();
+                if (sep === "") return 1;
+                return f.split(sep).length;
+            },
+            exampleUrl: function () {
+                return "https://example.com/blog/" + this.first();
+            },
+            copy: function () {
+                var value = this.output();
+                if (value === "") return;
+                var self = this;
+                var done = function () {
+                    self.copied = true;
+                    setTimeout(function () { self.copied = false; }, 2000);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(value).then(done, function () { self.fallbackCopy(done); });
+                } else {
+                    this.fallbackCopy(done);
+                }
+            },
+            // Older browsers without the async clipboard API: copy out of a
+            // throwaway textarea, so this works even when the list box is hidden.
+            fallbackCopy: function (done) {
+                var el = document.createElement("textarea");
+                el.value = this.output();
+                el.setAttribute("readonly", "readonly");
+                el.style.position = "fixed";
+                el.style.opacity = "0";
+                document.body.appendChild(el);
+                el.select();
+                try { document.execCommand("copy"); done(); } catch (e) { }
+                document.body.removeChild(el);
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="slugGen()" class="grid-2" style="margin:0" @submit.prevent>
+    <div>
+        <div class="form-group">
+            <label for="text">Title or Text</label>
+            <textarea id="text" x-model="text" rows="4" spellcheck="false"
+                placeholder="Paste a headline — or one title per line"></textarea>
+            <p class="text-xs text-muted">One title per line. Blank lines are ignored.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="separator">Separator</label>
+            <select id="separator" x-model="separator">
+                <option value="-">Hyphen — my-page-title (recommended)</option>
+                <option value="_">Underscore — my_page_title</option>
+                <option value=".">Dot — my.page.title</option>
+                <option value="none">None — mypagetitle</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="maxLength">Max Length (characters, 0 = no limit)</label>
+            <input type="text" id="maxLength" x-model="maxLength" placeholder="0">
+        </div>
+
+        <div class="form-group">
+            <label for="lowercase" class="flex" style="align-items:center;gap:.5rem">
+                <input type="checkbox" id="lowercase" x-model="lowercase">
+                <span>Force lowercase</span>
+            </label>
+            <label for="stripStopWords" class="flex" style="align-items:center;gap:.5rem">
+                <input type="checkbox" id="stripStopWords" x-model="stripStopWords">
+                <span>Strip stop words (the, and, of, to…)</span>
+            </label>
+            <label for="expandSymbols" class="flex" style="align-items:center;gap:.5rem">
+                <input type="checkbox" id="expandSymbols" x-model="expandSymbols">
+                <span>Spell out &amp; @ % + as words</span>
+            </label>
+        </div>
+
+        <p class="text-xs text-muted">Accented letters are folded to plain ASCII (São → sao). Everything runs in your
+            browser — your text is never uploaded or stored.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Your slug</p>
+            <div class="form-result" style="font-family:monospace;font-size:1.25rem;word-break:break-all"
+                x-text="first() || '—'"></div>
+
+            <p class="text-sm text-light mb-2 mt-4" x-show="count() > 1">All <span x-text="count()"></span> slugs</p>
+            <div class="form-group" x-show="count() > 1">
+                <label for="slugOutput" class="text-sm text-light">Generated slugs, one per line</label>
+                <textarea id="slugOutput" :value="output()" rows="5" readonly spellcheck="false"
+                    style="font-family:monospace"></textarea>
+            </div>
+
+            <div class="flex mt-4" style="gap:.5rem;justify-content:center">
+                <button type="button" @click="copy()" x-show="first() !== ''">
+                    <span x-text="copied ? 'Copied!' : (count() > 1 ? 'Copy all slugs' : 'Copy slug')"></span>
+                </button>
+            </div>
+
+            <p class="text-sm mt-4" x-show="first() !== ''">
+                <span x-text="firstLength()"></span> characters,
+                <span x-text="wordCount()"></span> <span x-text="wordCount() === 1 ? 'word' : 'words'"></span>.
+            </p>
+            <p class="text-xs text-muted mt-2" x-show="first() !== ''">
+                Example: <span style="font-family:monospace;word-break:break-all" x-text="exampleUrl()"></span>
+            </p>
+            <p class="text-sm text-muted mt-2" x-show="first() === ''">
+                Type a title above to generate a slug.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What a URL slug is</h2>
+<p>
+    A <strong>slug</strong> is the human-readable part of a URL that identifies one specific page — the
+    <code>url-slug-generator</code> in <code>example.com/tools/url-slug-generator</code>. The name comes from
+    newspaper and publishing jargon, where a "slug" was the short working name an editor gave a story while it moved
+    through production.
+</p>
+<p>
+    A good slug is lowercase, uses hyphens between words, contains only unreserved URL characters, and is short enough
+    to read at a glance. That matters for more than tidiness: slugs are visible in search results, in link previews and
+    in anything a person copies into a chat message. Characters outside the safe set get <em>percent-encoded</em> by the
+    browser, so a space becomes <code>%20</code> and an accented character can expand to several bytes — turning a
+    readable address into noise.
+</p>
+
+<h2>How to use this generator</h2>
+<ol>
+    <li><strong>Paste your title.</strong> One title per line — paste a whole list of headings and you get a slug for
+        each, in order. Blank lines are skipped.</li>
+    <li><strong>Pick a separator.</strong> Hyphens are the right default. Underscores and dots work technically but are
+        less conventional in web URLs.</li>
+    <li><strong>Set a max length</strong> if your CMS or routing layer has a limit. Leave it at 0 for no limit. When a
+        slug is trimmed, the cut is made at a word boundary so you never end up with half a word.</li>
+    <li><strong>Toggle the options</strong> — force lowercase, strip stop words, spell out symbols — and watch the
+        result update as you type.</li>
+    <li><strong>Copy it.</strong> With one title the button copies that slug; with several, it copies the whole
+        list.</li>
+</ol>
+
+<h2>The method, step by step</h2>
+<p>The transformation is deterministic, and it runs in this order:</p>
+<ol>
+    <li><strong>Fold accents to ASCII.</strong> Letters are decomposed with Unicode NFD normalisation and the combining
+        marks are dropped, so <code>é</code> becomes <code>e</code> and <code>ü</code> becomes <code>u</code>. A small
+        lookup table handles letters NFD cannot split, such as <code>ß</code> &rarr; <code>ss</code>,
+        <code>ø</code> &rarr; <code>o</code> and <code>æ</code> &rarr; <code>ae</code>.</li>
+    <li><strong>Spell out symbols</strong> (optional): <code>&amp;</code> &rarr; <code>and</code>,
+        <code>@</code> &rarr; <code>at</code>, <code>%</code> &rarr; <code>percent</code>,
+        <code>+</code> &rarr; <code>plus</code>. Without this they would simply disappear, and
+        <code>R&amp;D</code> would read as <code>r-d</code>.</li>
+    <li><strong>Delete apostrophes and quotes</strong> so <code>lover's</code> becomes <code>lovers</code> rather than
+        <code>lover-s</code>.</li>
+    <li><strong>Lowercase</strong> (optional). Hostnames are case-insensitive but paths are not, so
+        <code>/About</code> and <code>/about</code> are two different URLs as far as the standard is concerned.
+        Lowercase everything and that ambiguity never arises.</li>
+    <li><strong>Split on anything that is not a letter or digit</strong>, discard the empty pieces, and rejoin with
+        your separator. Collapsing runs of punctuation in a single pass is what stops <code>--</code> and trailing
+        hyphens from ever appearing.</li>
+    <li><strong>Remove stop words</strong> (optional) — common words like <em>the</em>, <em>and</em>, <em>of</em> and
+        <em>to</em>. If a title consists of nothing but stop words, the tool keeps them instead of handing back an
+        empty slug.</li>
+    <li><strong>Trim to the max length</strong> at the last separator before the limit.</li>
+</ol>
+
+<h2>A worked example</h2>
+<p>Start with the default title: <code>The 10 Best Coffee Shops in São Paulo — A Café Lover's Guide!</code></p>
+<ul>
+    <li>Accent folding gives <code>The 10 Best Coffee Shops in Sao Paulo — A Cafe Lover's Guide!</code></li>
+    <li>Apostrophes go, so <code>Lover's</code> becomes <code>Lovers</code></li>
+    <li>Lowercasing and splitting on non-alphanumerics produces the words <em>the, 10, best, coffee, shops, in, sao,
+            paulo, a, cafe, lovers, guide</em> — the em dash and the exclamation mark vanish rather than leaving
+        gaps</li>
+    <li>Joined with hyphens: <code>the-10-best-coffee-shops-in-sao-paulo-a-cafe-lovers-guide</code> (57 characters)
+    </li>
+    <li>Turn on <em>strip stop words</em> and <em>the</em>, <em>in</em> and <em>a</em> drop out:
+        <code>10-best-coffee-shops-sao-paulo-cafe-lovers-guide</code> (47 characters)</li>
+    <li>Add a max length of 30 and the result is cut back to the last whole word:
+        <code>10-best-coffee-shops-sao</code></li>
+</ul>
+
+<h2>Should you strip stop words?</h2>
+<p>
+    It is a genuine trade-off, and reasonable people disagree. Removing stop words makes a slug shorter and raises the
+    share of it that is meaningful keywords. But Google's own guidance on URL structure asks for URLs that are simple
+    and readable to humans, and over-trimming makes a slug read like a telegram. Google has also said publicly that
+    words in the URL are a very small ranking factor, so this is mostly a readability decision rather than a ranking
+    one. The rule most editorial teams land on: strip stop words when the title is long and the slug would otherwise
+    sprawl, and leave them in when removing them hurts comprehension — <code>how-to-tie-a-tie</code> is clearer than
+    <code>how-tie-tie</code>.
+</p>
+
+<h2>Slug rules worth knowing</h2>
+<ul>
+    <li><strong>Keep it stable.</strong> Changing a published slug breaks every existing link to the page. If you must
+        change one, serve a 301 redirect from the old path to the new one.</li>
+    <li><strong>Hyphens, not underscores.</strong> Google has long recommended hyphens as word separators in URLs,
+        because they are treated as word boundaries.</li>
+    <li><strong>No stuffing.</strong> Repeating a keyword in the slug does nothing useful and reads badly.</li>
+    <li><strong>Watch for collisions.</strong> Two different titles can produce the same slug — "The Best Tools" and
+        "Best Tools" both become <code>best-tools</code> once stop words are stripped. Most systems append
+        <code>-2</code> or an ID; check before publishing.</li>
+    <li><strong>Non-Latin scripts.</strong> Accent folding only helps languages written in Latin script. For Greek,
+        Cyrillic, Arabic or CJK text it produces nothing usable — you either transliterate properly for that language
+        or use a percent-encoded internationalised URL, which modern browsers display back to the reader correctly.
+    </li>
+    <li><strong>Mind the whole URL length.</strong> There is no limit in the URI standard itself, but browsers,
+        proxies and server software each impose their own practical ceilings, so short slugs are the safe habit.</li>
+</ul>
+
+<h2>Privacy</h2>
+<p>
+    This page is static and the generator is plain JavaScript running in your tab. There is no server call, no
+    analytics event and no storage: whatever you paste in stays on your device and is gone when you close the tab. You
+    can confirm that by opening your browser's network tab while you type, or by reading the page source.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://developers.google.com/search/docs/crawling-indexing/url-structure" target="_blank"
+            rel="noopener">Google Search Central — Keep a simple URL structure</a></li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc3986" target="_blank" rel="noopener">RFC 3986 — Uniform Resource
+            Identifier (URI): Generic Syntax</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Clean_URL" target="_blank" rel="noopener">Clean URL — Wikipedia</a></li>
+</ul>
+{{end}}
