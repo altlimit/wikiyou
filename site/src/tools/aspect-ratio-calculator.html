@@ -1,0 +1,322 @@
+---
+updated: "2026-10-15"
+template: tool.html
+title: Aspect Ratio Calculator
+description: "Scale width and height while keeping the same aspect ratio — perfect for images and video. Shows the simplified ratio such as 16:9."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function ratioCalc() {
+        return {
+            origW: 1920,
+            origH: 1080,
+            newW: 1280,
+            newH: 720,
+            mode: "width",
+            preset: "",
+            // Common reduced ratios, keyed by "w:h". Used only on an exact match.
+            names: {
+                "16:9": "widescreen HD video",
+                "9:16": "vertical video",
+                "4:3": "classic TV / early computer displays",
+                "3:4": "portrait 4:3",
+                "3:2": "35 mm photo frame",
+                "2:3": "portrait 35 mm",
+                "5:4": "older LCD monitors",
+                "1:1": "square",
+                "64:27": "ultrawide, often marketed as 21:9",
+                "256:135": "DCI 4K scope (about 1.90:1)",
+                "37:20": "1.85:1 cinema flat",
+                "239:100": "2.39:1 cinema scope"
+            },
+            n: function (v) {
+                var x = parseFloat(v);
+                if (!isFinite(x) || x <= 0) return 0;
+                return x;
+            },
+            haveOriginal: function () {
+                return this.n(this.origW) > 0 && this.n(this.origH) > 0;
+            },
+            ready: function () {
+                if (!this.haveOriginal()) return false;
+                return this.mode === "width" ? this.n(this.newW) > 0 : this.n(this.newH) > 0;
+            },
+            outW: function () {
+                if (!this.ready()) return 0;
+                if (this.mode === "width") return this.n(this.newW);
+                return this.n(this.newH) * this.n(this.origW) / this.n(this.origH);
+            },
+            outH: function () {
+                if (!this.ready()) return 0;
+                if (this.mode === "height") return this.n(this.newH);
+                return this.n(this.newW) * this.n(this.origH) / this.n(this.origW);
+            },
+            dims: function () {
+                if (!this.ready()) return "—";
+                return Math.round(this.outW()) + " × " + Math.round(this.outH());
+            },
+            solvedW: function () {
+                if (!this.ready()) return "";
+                return String(Math.round(this.outW()));
+            },
+            solvedH: function () {
+                if (!this.ready()) return "";
+                return String(Math.round(this.outH()));
+            },
+            exactNote: function () {
+                if (!this.ready()) return "";
+                var parts = [];
+                var w = this.outW(), h = this.outH();
+                if (Math.abs(w - Math.round(w)) > 0.0005) parts.push("width " + (Math.round(w * 100) / 100));
+                if (Math.abs(h - Math.round(h)) > 0.0005) parts.push("height " + (Math.round(h * 100) / 100));
+                if (!parts.length) return "";
+                return "Exact " + parts.join(" and ") + " px — rounded to whole pixels above.";
+            },
+            scalePct: function () {
+                if (!this.ready()) return "";
+                var f = this.outW() / this.n(this.origW);
+                return (Math.round(f * 1000) / 10) + "%";
+            },
+            gcd: function (a, b) {
+                while (b) { var t = a % b; a = b; b = t; }
+                return a;
+            },
+            reduced: function () {
+                if (!this.haveOriginal()) return null;
+                // Scale by 1000 first so decimal inputs (e.g. 2.35) still reduce cleanly.
+                var w = Math.round(this.n(this.origW) * 1000);
+                var h = Math.round(this.n(this.origH) * 1000);
+                if (!w || !h) return null;
+                var g = this.gcd(w, h) || 1;
+                return { w: w / g, h: h / g };
+            },
+            ratioText: function () {
+                var r = this.reduced();
+                if (!r) return "—";
+                return r.w + ":" + r.h;
+            },
+            decimalText: function () {
+                if (!this.haveOriginal()) return "";
+                var v = this.n(this.origW) / this.n(this.origH);
+                return (Math.round(v * 1000) / 1000) + ":1";
+            },
+            ratioName: function () {
+                var r = this.reduced();
+                if (!r) return "";
+                return this.names[r.w + ":" + r.h] || "";
+            },
+            swap: function () {
+                var w = this.origW;
+                this.origW = this.origH;
+                this.origH = w;
+                this.preset = "";
+            },
+            applyPreset: function () {
+                if (!this.preset) return;
+                var parts = this.preset.split(",");
+                this.origW = parts[0];
+                this.origH = parts[1];
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="ratioCalc()" class="grid-2" style="margin:0" onsubmit="return false">
+    <div>
+        <div class="form-group">
+            <label for="preset">Start From a Common Ratio (optional)</label>
+            <select id="preset" x-model="preset" @change="applyPreset()">
+                <option value="">Custom — I will enter my own size</option>
+                <option value="1920,1080">16:9 — 1920 × 1080 (HD video)</option>
+                <option value="3840,2160">16:9 — 3840 × 2160 (4K UHD)</option>
+                <option value="1080,1920">9:16 — 1080 × 1920 (vertical video)</option>
+                <option value="1024,768">4:3 — 1024 × 768 (classic)</option>
+                <option value="3000,2000">3:2 — 3000 × 2000 (35 mm photo)</option>
+                <option value="1080,1080">1:1 — 1080 × 1080 (square)</option>
+                <option value="1280,1024">5:4 — 1280 × 1024</option>
+                <option value="2560,1080">64:27 — 2560 × 1080 (ultrawide)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="origW">Original Width (px)</label>
+            <input type="text" id="origW" x-model="origW" placeholder="1920">
+        </div>
+
+        <div class="form-group">
+            <label for="origH">Original Height (px)</label>
+            <input type="text" id="origH" x-model="origH" placeholder="1080">
+        </div>
+
+        <div class="form-group">
+            <button type="button" class="btn btn-secondary btn-sm" @click="swap()">Swap width and height</button>
+        </div>
+
+        <div class="form-group">
+            <label for="mode">Which New Dimension Do You Know?</label>
+            <select id="mode" x-model="mode">
+                <option value="width">I know the new width — solve the height</option>
+                <option value="height">I know the new height — solve the width</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="newW" x-bind:for="mode === 'width' ? 'newW' : 'newWCalc'">New Width (px)</label>
+            <input type="text" id="newW" x-model="newW" placeholder="1280" x-show="mode === 'width'">
+            <input type="text" id="newWCalc" readonly aria-readonly="true" x-bind:value="solvedW()"
+                x-show="mode === 'height'">
+        </div>
+
+        <div class="form-group">
+            <label for="newH" x-bind:for="mode === 'height' ? 'newH' : 'newHCalc'">New Height (px)</label>
+            <input type="text" id="newH" x-model="newH" placeholder="720" x-show="mode === 'height'">
+            <input type="text" id="newHCalc" readonly aria-readonly="true" x-bind:value="solvedH()"
+                x-show="mode === 'width'">
+        </div>
+
+        <p class="text-xs text-muted">Everything is calculated in your browser — nothing you type is uploaded
+            anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">New Dimensions</p>
+            <div class="form-result" x-text="dims()"></div>
+
+            <p class="text-sm text-light mb-2 mt-4">Simplified Aspect Ratio</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="ratioText()"></div>
+            <p class="text-sm text-light mt-2" x-show="haveOriginal()">
+                <span x-text="decimalText()"></span><span x-show="ratioName()"> — <span
+                        x-text="ratioName()"></span></span>
+            </p>
+
+            <p class="text-sm mt-4" x-show="ready()">
+                Scaled to <strong x-text="scalePct()"></strong> of the original size.
+            </p>
+            <p class="text-sm text-muted mt-2" x-show="exactNote()" x-text="exactNote()"></p>
+            <p class="text-sm text-muted mt-4" x-show="!haveOriginal()">
+                Enter an original width and height greater than zero to see a result.
+            </p>
+            <p class="text-sm text-muted mt-2" x-show="haveOriginal() &amp;&amp; !ready()">
+                Now enter the new dimension you know.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is an aspect ratio?</h2>
+<p>
+    An <strong>aspect ratio</strong> is the relationship between the width and the height of a rectangle, written as
+    two numbers separated by a colon — <strong>16:9</strong>, <strong>4:3</strong>, <strong>1:1</strong>. It describes
+    shape, not size: a 1920 × 1080 video frame, a 1280 × 720 thumbnail, and a 640 × 360 preview are all 16:9, because
+    dividing width by height gives roughly 1.778 in every case.
+</p>
+<p>
+    That distinction is why resizing by eye causes trouble. If you change a width but pick the wrong height, the image
+    no longer matches its original ratio, and whatever displays it must either stretch the picture (faces get wide or
+    narrow), letterbox it with bars, or crop part of the frame away. Keeping the ratio fixed while changing the size is
+    called <em>proportional scaling</em>, and it is exactly what this calculator does.
+</p>
+
+<h2>How to use this calculator</h2>
+<ol>
+    <li>Enter your <strong>original width</strong> and <strong>original height</strong>. You can also pick a common
+        ratio from the dropdown to fill both fields, then edit them.</li>
+    <li>Choose whether you know the <strong>new width</strong> or the <strong>new height</strong> — whichever one your
+        target space dictates.</li>
+    <li>Type that one value. The other dimension is solved immediately and shown in the read-only field and in the
+        result panel.</li>
+</ol>
+<p>
+    The panel also reports the <strong>simplified ratio</strong> of your original size (reduced to its smallest whole
+    numbers), the same ratio as a decimal in <em>x</em>:1 form, and the scale factor as a percentage so you can see at a
+    glance whether you are shrinking or enlarging. The <strong>Swap width and height</strong> button flips the original
+    dimensions, which is handy when you need the portrait version of a landscape ratio.
+</p>
+
+<h2>The formula</h2>
+<p>
+    Proportional scaling is a single cross-multiplication. If the original size is <strong>W × H</strong>, the new
+    dimensions must satisfy:
+</p>
+<ul>
+    <li><strong>new height = new width × H ÷ W</strong></li>
+    <li><strong>new width = new height × W ÷ H</strong></li>
+</ul>
+<p>
+    To express the ratio in whole numbers, divide both the width and the height by their
+    <strong>greatest common divisor</strong> (GCD) — the largest number that divides both exactly. For 1920 and 1080 the
+    GCD is 120, so 1920 ÷ 120 = 16 and 1080 ÷ 120 = 9, giving 16:9. This calculator multiplies your inputs by 1000
+    before reducing, so decimal entries such as 2.35 still reduce to a clean whole-number ratio.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Say you shot a photo at <strong>4032 × 3024</strong> and you need it to fit a content column that is
+    <strong>1200 px</strong> wide. Entering those values gives:
+</p>
+<ul>
+    <li>new height = 1200 × 3024 ÷ 4032 = <strong>900</strong>, so the resized image is
+        <strong>1200 × 900</strong>;</li>
+    <li>the simplified ratio is <strong>4:3</strong>, because the GCD of 4032 and 3024 is 1008;</li>
+    <li>the scale factor is 1200 ÷ 4032 ≈ <strong>29.8%</strong> of the original size.</li>
+</ul>
+<p>
+    Had you guessed 1200 × 800 instead, you would have been working at 3:2 — the image would appear vertically squashed
+    by about 12%, or lose a strip top and bottom if cropped to fit.
+</p>
+
+<h2>Rounding and whole pixels</h2>
+<p>
+    Pixels are whole numbers, but ratios often are not. Scaling a 1920 × 1080 frame to 1000 px wide calls for a height
+    of 562.5 px, which no image file can store. The calculator shows the rounded value as the answer and tells you the
+    exact figure underneath whenever rounding occurred, so you can decide how to absorb the difference. In practice a
+    half-pixel error is invisible; where it matters — video encoders, for instance, often require dimensions divisible
+    by 2 or even 16 — pick a nearby width that divides cleanly, such as 960 × 540 rather than 1000 × 562.5.
+</p>
+
+<h2>Common aspect ratios</h2>
+<ul>
+    <li><strong>16:9</strong> — the standard for HD and 4K video, and for most monitors and TVs (1920 × 1080,
+        3840 × 2160).</li>
+    <li><strong>9:16</strong> — 16:9 turned on its side, used by vertical phone video and short-form platforms.</li>
+    <li><strong>4:3</strong> — analogue television and early computer displays; still common for presentation slides
+        and some camera sensors.</li>
+    <li><strong>3:2</strong> — the 35 mm film frame, inherited by most DSLR and mirrorless cameras.</li>
+    <li><strong>1:1</strong> — square, widely used for avatars, product thumbnails and social posts.</li>
+    <li><strong>64:27</strong> — ultrawide monitors, usually marketed as 21:9 even though the exact ratio is about
+        2.37:1.</li>
+    <li><strong>1.85:1 and 2.39:1</strong> — the two common theatrical projection formats, called flat and scope.</li>
+</ul>
+<p>
+    If you are laying out a page rather than resizing a file, CSS can hold a ratio for you: the
+    <code>aspect-ratio</code> property accepts values like <code>16 / 9</code> and lets the browser compute the second
+    dimension automatically. Use this calculator when you need concrete numbers — export presets, canvas sizes,
+    thumbnail dimensions — and the CSS property when the container should stay flexible.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Aspect_ratio_(image)" target="_blank" rel="noopener">Aspect ratio
+            (image) — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Greatest_common_divisor" target="_blank" rel="noopener">Greatest common
+            divisor — Wikipedia</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/aspect-ratio" target="_blank" rel="noopener">CSS
+            aspect-ratio — MDN Web Docs</a></li>
+</ul>
+{{end}}
