@@ -132,20 +132,27 @@ og_type: article
                                 } else {
                                     var started = false;
                                     var transferId = r.data.tid;
+                                    // Number every chunk: the receiver cannot rely on them
+                                    // arriving in the order they were sent. See the "chunks"
+                                    // case below.
+                                    var seq = 0;
                                     this.parseFile(file, function (chunk, done) {
                                         var data = started ? {
                                             blob: chunk,
-                                            tid: transferId
+                                            tid: transferId,
+                                            seq: seq
                                         } : {
                                             blob: chunk,
                                             name: file.name,
                                             type: file.type,
                                             size: file.size,
-                                            tid: transferId
+                                            tid: transferId,
+                                            seq: seq
                                         };
                                         if (done) {
                                             data.done = true;
                                         }
+                                        seq++;
                                         started = true;
                                         this.peers[r.data.peerId].send({
                                             action: "chunks",
@@ -160,6 +167,13 @@ og_type: article
                         this.triggerDownload(r.data);
                         break;
                     case "chunks":
+                        // Chunks are not delivered in the order they were sent. PeerJS
+                        // splits a message bigger than its own limit into pieces and
+                        // reassembles them asynchronously, while a message below that
+                        // limit is handed over whole and synchronously — so the short
+                        // final chunk of a file routinely overtakes a full 64 KiB chunk
+                        // still being reassembled. Neither the arrival order nor the
+                        // `done` flag can be trusted; only the byte count can.
                         if (!this.chunks[r.data.tid]) {
                             this.chunks[r.data.tid] = {
                                 size: r.data.size,
@@ -168,15 +182,27 @@ og_type: article
                                 type: r.data.type,
                                 blob: []
                             };
+                        } else if (r.data.size !== undefined) {
+                            // Only the first chunk carries the file's metadata, and it is
+                            // not necessarily the first one to arrive.
+                            this.chunks[r.data.tid].size = r.data.size;
+                            this.chunks[r.data.tid].name = r.data.name;
+                            this.chunks[r.data.tid].type = r.data.type;
                         }
                         if (r.data.blob) {
-                            this.chunks[r.data.tid].blob.push(r.data.blob);
+                            // Park each chunk at its own index so the blob is assembled in
+                            // send order. A sender on an older cached copy of this page
+                            // sends no seq; fall back to append order for it.
+                            var at = r.data.seq !== undefined ? r.data.seq : this.chunks[r.data.tid].blob
+                                .length;
+                            this.chunks[r.data.tid].blob[at] = r.data.blob;
                             this.chunks[r.data.tid].progress += r.data.blob.byteLength !== undefined ? r.data
                                 .blob
                                 .byteLength : r.data.blob.length;
                         }
 
-                        if (r.data.done) {
+                        if (this.chunks[r.data.tid].size !== undefined &&
+                            this.chunks[r.data.tid].progress >= Number(this.chunks[r.data.tid].size)) {
                             this.triggerDownload(this.chunks[r.data.tid]);
                             delete this.chunks[r.data.tid];
                         }
@@ -355,7 +381,7 @@ og_type: article
             },
             downloadProgress: function (file) {
                 var tid = this.downloads[file.owner + file.name];
-                if (tid && this.chunks[tid]) {
+                if (tid && this.chunks[tid] && this.chunks[tid].size) {
                     return Math.floor(this.chunks[tid].progress / Number(this.chunks[tid].size) * 100);
                 }
                 return 0;
