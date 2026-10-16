@@ -39,6 +39,12 @@ og_type: article
             error: null,
             isOwner: false,
             downloads: {},
+            // tid -> { owner, key }, for every download this page has asked for
+            // and not yet finished. It is what lets a transfer be abandoned when
+            // the peer sending it goes away: chunks[tid] on its own says nothing
+            // about who the chunks were coming from. Entries live exactly as long
+            // as downloads[key], and both are dropped on completion or on cancel.
+            transfers: {},
             qs: function () {
                 var a = window.location.search.substr(1).split('&');
                 if (a == "") return {};
@@ -126,7 +132,11 @@ og_type: article
                                             blob: [file],
                                             name: file.name,
                                             type: file.type,
-                                            size: file.size
+                                            size: file.size,
+                                            // Echoed back only so the receiver can retire the
+                                            // transfer it registered; a file sent whole has no
+                                            // chunks to key on.
+                                            tid: r.data.tid
                                         }
                                     });
                                 } else {
@@ -165,8 +175,20 @@ og_type: article
                         break;
                     case "file":
                         this.triggerDownload(r.data);
+                        // A sender on an older cached copy of this page echoes no
+                        // tid; endTransfer ignores one it does not know, and the
+                        // entry is then cleared whenever that peer goes away.
+                        this.endTransfer(r.data.tid);
                         break;
                     case "chunks":
+                        // Only chunks for a transfer this page still wants are
+                        // accepted. Once a transfer has been abandoned — the peer
+                        // sending it disconnected — a chunk still in flight must
+                        // not recreate it, or the file would go back to looking
+                        // half-downloaded and the Download button would vanish again.
+                        if (!this.transfers[r.data.tid]) {
+                            break;
+                        }
                         // Chunks are not delivered in the order they were sent. PeerJS
                         // splits a message bigger than its own limit into pieces and
                         // reassembles them asynchronously, while a message below that
@@ -204,7 +226,7 @@ og_type: article
                         if (this.chunks[r.data.tid].size !== undefined &&
                             this.chunks[r.data.tid].progress >= Number(this.chunks[r.data.tid].size)) {
                             this.triggerDownload(this.chunks[r.data.tid]);
-                            delete this.chunks[r.data.tid];
+                            this.endTransfer(r.data.tid);
                         }
                         break;
                 }
@@ -217,6 +239,56 @@ og_type: article
                 link.href = window.URL.createObjectURL(blob);
                 link.download = data.name;
                 link.click();
+            },
+            // Forget a transfer and everything that hangs off it: the chunks held
+            // in memory, the tid, and the downloads entry the file row looks up.
+            // With all three gone downloadProgress() is back to 0, so the file
+            // shows a working Download button again instead of a frozen bar.
+            endTransfer: function (tid) {
+                var transfer = this.transfers[tid];
+                if (!transfer) {
+                    return;
+                }
+                delete this.chunks[tid];
+                delete this.downloads[transfer.key];
+                delete this.transfers[tid];
+            },
+            // A peer we were downloading from has gone. Nothing more is coming for
+            // its transfers, so give them up rather than leave them part-finished
+            // forever — the page has no other way back from a stalled download.
+            cancelTransfers: function (peerId) {
+                Object.keys(this.transfers).forEach(function (tid) {
+                    if (this.transfers[tid].owner == peerId) {
+                        this.endTransfer(tid);
+                    }
+                }.bind(this));
+            },
+            // Everything to forget about a peer that is no longer reachable. Safe
+            // to call twice: the two ways we notice a peer has gone (below) can
+            // both fire for the same one.
+            dropPeer: function (peerId) {
+                delete this.peers[peerId];
+                delete this.otherFiles[peerId];
+                this.cancelTransfers(peerId);
+            },
+            // PeerJS only gives a connection up when iceConnectionState reaches
+            // "failed" or "closed"; on "disconnected" it logs and waits. A peer
+            // that simply vanished — tab closed, laptop shut, network gone —
+            // leaves Chromium sitting on "disconnected" indefinitely, so the
+            // conn 'close' handlers never run and a download in flight would
+            // stay frozen for good. connectionState does reach "failed" there —
+            // about fifteen seconds after the tab went, in Chromium — so watch
+            // that as well.
+            watchConnection: function (conn) {
+                var pc = conn.peerConnection;
+                if (!pc || !pc.addEventListener) {
+                    return;
+                }
+                pc.addEventListener('connectionstatechange', function () {
+                    if (pc.connectionState == "failed" || pc.connectionState == "closed") {
+                        this.dropPeer(conn.peer);
+                    }
+                }.bind(this));
             },
             peerIds: function () {
                 return Object.keys(this.peers);
@@ -257,6 +329,7 @@ og_type: article
                 this.peer.on('connection', function (conn) {
                     conn.on('open', function () {
                         this.peers[conn.peer] = conn;
+                        this.watchConnection(conn);
                         if (this.isOwner) {
                             this.sendAll("peers", this.peerIds());
                         }
@@ -266,8 +339,7 @@ og_type: article
                         this.receive(data);
                     }.bind(this));
                     conn.on('close', function () {
-                        delete this.peers[conn.peer];
-                        delete this.otherFiles[conn.peer];
+                        this.dropPeer(conn.peer);
                         this.sendAll("peers", this.peerIds());
                     }.bind(this));
                 }.bind(this));
@@ -304,23 +376,29 @@ og_type: article
                 conn.on('open', function () {
                     this.ready = true;
                     this.peers[peerId] = conn;
+                    this.watchConnection(conn);
                 }.bind(this));
                 conn.on('data', function (data) {
                     this.receive(data);
                 }.bind(this));
                 conn.on('close', function () {
-                    delete this.peers[conn.peer];
-                    delete this.otherFiles[conn.peer];
+                    this.dropPeer(conn.peer);
                 }.bind(this));
                 conn.on('error', function () {
                     console.log("connection error", conn.peer);
                 }.bind(this));
             },
             download(file) {
-                var tid = this.downloads[file.owner + file.name];
+                var key = file.owner + file.name;
+                var tid = this.downloads[key];
                 if (file.owner == this.peer.id || tid && this.chunks[tid]) return;
+                if (!this.peers[file.owner]) return;
                 tid = this.uid();
-                this.downloads[file.owner + file.name] = tid;
+                this.downloads[key] = tid;
+                this.transfers[tid] = {
+                    owner: file.owner,
+                    key: key
+                };
                 this.peers[file.owner].send({
                     action: "download",
                     data: {
