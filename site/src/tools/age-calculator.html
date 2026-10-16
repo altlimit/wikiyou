@@ -157,33 +157,36 @@ og_type: article
             </p>
         </div>
 
-        <div x-show="hasResult()">
-            <div class="flex mb-2" style="justify-content:space-between">
-                <span class="text-sm text-light">Total days</span>
-                <span class="text-sm"><strong x-text="fmt(calc().totalDays)"></strong></span>
+        <!-- x-if, not x-show: x-show would still evaluate calc() below while it is null. -->
+        <template x-if="hasResult()">
+            <div>
+                <div class="flex mb-2" style="justify-content:space-between">
+                    <span class="text-sm text-light">Total days</span>
+                    <span class="text-sm"><strong x-text="fmt(calc().totalDays)"></strong></span>
+                </div>
+                <div class="flex mb-2" style="justify-content:space-between">
+                    <span class="text-sm text-light">Total weeks</span>
+                    <span class="text-sm"><strong x-text="weeksText()"></strong></span>
+                </div>
+                <div class="flex mb-2" style="justify-content:space-between">
+                    <span class="text-sm text-light">Whole months</span>
+                    <span class="text-sm"><strong x-text="fmt(calc().totalMonths)"></strong></span>
+                </div>
+                <div class="flex mb-2" style="justify-content:space-between">
+                    <span class="text-sm text-light">Total hours</span>
+                    <span class="text-sm"><strong x-text="fmt(calc().totalHours)"></strong></span>
+                </div>
+                <div class="flex mb-2" style="justify-content:space-between">
+                    <span class="text-sm text-light">Born on a</span>
+                    <span class="text-sm"><strong x-text="calc().bornOn"></strong></span>
+                </div>
+                <div class="flex mb-2" style="justify-content:space-between">
+                    <span class="text-sm text-light">Next birthday</span>
+                    <span class="text-sm"><strong x-text="nextText()"></strong></span>
+                </div>
+                <p class="text-xs text-muted text-center mt-2" x-text="turnsText()"></p>
             </div>
-            <div class="flex mb-2" style="justify-content:space-between">
-                <span class="text-sm text-light">Total weeks</span>
-                <span class="text-sm"><strong x-text="weeksText()"></strong></span>
-            </div>
-            <div class="flex mb-2" style="justify-content:space-between">
-                <span class="text-sm text-light">Whole months</span>
-                <span class="text-sm"><strong x-text="fmt(calc().totalMonths)"></strong></span>
-            </div>
-            <div class="flex mb-2" style="justify-content:space-between">
-                <span class="text-sm text-light">Total hours</span>
-                <span class="text-sm"><strong x-text="fmt(calc().totalHours)"></strong></span>
-            </div>
-            <div class="flex mb-2" style="justify-content:space-between">
-                <span class="text-sm text-light">Born on a</span>
-                <span class="text-sm"><strong x-text="calc().bornOn"></strong></span>
-            </div>
-            <div class="flex mb-2" style="justify-content:space-between">
-                <span class="text-sm text-light">Next birthday</span>
-                <span class="text-sm"><strong x-text="nextText()"></strong></span>
-            </div>
-            <p class="text-xs text-muted text-center mt-2" x-text="turnsText()"></p>
-        </div>
+        </template>
     </div>
 </form>
 {{end}}
