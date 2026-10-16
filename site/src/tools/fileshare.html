@@ -39,12 +39,28 @@ og_type: article
             error: null,
             isOwner: false,
             downloads: {},
-            // tid -> { owner, key }, for every download this page has asked for
-            // and not yet finished. It is what lets a transfer be abandoned when
-            // the peer sending it goes away: chunks[tid] on its own says nothing
-            // about who the chunks were coming from. Entries live exactly as long
-            // as downloads[key], and both are dropped on completion or on cancel.
+            // tid -> { owner, key, name, timer }, for every download this page
+            // has asked for and not yet finished. It is what lets a transfer be
+            // abandoned when the peer sending it goes away: chunks[tid] on its
+            // own says nothing about who the chunks were coming from. Entries
+            // live exactly as long as downloads[key], and both are dropped on
+            // completion or on cancel.
             transfers: {},
+            // key (owner + name) -> { key, name, message } for a download that
+            // was given up, so the page can say so. Without this a failure is
+            // silent: the file just quietly becomes downloadable again, or the
+            // row vanishes altogether when the peer sharing it has gone.
+            // Cleared when that file is asked for again, or dismissed.
+            failures: {},
+            // How long a transfer may go without a single chunk before it is
+            // given up. Nothing else notices a sender that stops sending while
+            // its connection stays healthy — a FileReader error, a tab frozen
+            // by the OS — and the recipient would otherwise watch a progress
+            // bar that never moves again, with no way out but a reload. The
+            // clock measures silence, not total time, so a big file on a slow
+            // link is never at risk: 45s between 64 KiB chunks is about
+            // 12 kbit/s, which could not finish a multi-megabyte file anyway.
+            stallTimeout: 45000,
             qs: function () {
                 var a = window.location.search.substr(1).split('&');
                 if (a == "") return {};
@@ -176,19 +192,27 @@ og_type: article
                     case "file":
                         this.triggerDownload(r.data);
                         // A sender on an older cached copy of this page echoes no
-                        // tid; endTransfer ignores one it does not know, and the
-                        // entry is then cleared whenever that peer goes away.
-                        this.endTransfer(r.data.tid);
+                        // tid, so the transfer it answered has to be found by name
+                        // instead. Retiring it matters more than it used to: left
+                        // registered, the stall watchdog would report a failure for
+                        // a file that has just arrived.
+                        var done = r.data.tid !== undefined ? r.data.tid : this.wholeFileTransfer(r.data.name);
+                        this.endTransfer(done);
                         break;
                     case "chunks":
                         // Only chunks for a transfer this page still wants are
                         // accepted. Once a transfer has been abandoned — the peer
-                        // sending it disconnected — a chunk still in flight must
-                        // not recreate it, or the file would go back to looking
-                        // half-downloaded and the Download button would vanish again.
+                        // sending it disconnected, or it stalled — a chunk still in
+                        // flight must not recreate it, or the file would go back to
+                        // looking half-downloaded and the Download button would
+                        // vanish again.
                         if (!this.transfers[r.data.tid]) {
                             break;
                         }
+                        // Something arrived, so the transfer is alive: restart its
+                        // watchdog. endTransfer clears the timer when the last byte
+                        // lands, so the final chunk does not leave one armed.
+                        this.armStall(r.data.tid);
                         // Chunks are not delivered in the order they were sent. PeerJS
                         // splits a message bigger than its own limit into pieces and
                         // reassembles them asynchronously, while a message below that
@@ -241,17 +265,56 @@ og_type: article
                 link.click();
             },
             // Forget a transfer and everything that hangs off it: the chunks held
-            // in memory, the tid, and the downloads entry the file row looks up.
-            // With all three gone downloadProgress() is back to 0, so the file
-            // shows a working Download button again instead of a frozen bar.
-            endTransfer: function (tid) {
+            // in memory, the watchdog, the tid, and the downloads entry the file
+            // row looks up. With those gone downloadProgress() is back to 0, so
+            // the file shows a working Download button again instead of a frozen
+            // bar. A reason marks the transfer as failed and is shown to the user;
+            // no reason means it finished, which also clears any earlier failure
+            // recorded for the same file.
+            endTransfer: function (tid, reason) {
                 var transfer = this.transfers[tid];
                 if (!transfer) {
                     return;
                 }
+                clearTimeout(transfer.timer);
+                if (reason) {
+                    this.failures[transfer.key] = {
+                        key: transfer.key,
+                        name: transfer.name,
+                        message: reason
+                    };
+                } else {
+                    delete this.failures[transfer.key];
+                }
                 delete this.chunks[tid];
                 delete this.downloads[transfer.key];
                 delete this.transfers[tid];
+            },
+            // Start, or restart, one transfer's stall watchdog. Armed when the
+            // download is asked for — which also bounds a request a peer never
+            // answers at all — and again on every chunk, so only silence counts
+            // against it.
+            armStall: function (tid) {
+                var transfer = this.transfers[tid];
+                if (!transfer) {
+                    return;
+                }
+                clearTimeout(transfer.timer);
+                transfer.timer = setTimeout(function () {
+                    this.endTransfer(tid, "Download failed — nothing arrived for " +
+                        Math.round(this.stallTimeout / 1000) + " seconds. Try again.");
+                }.bind(this), this.stallTimeout);
+            },
+            // The tid of a transfer waiting on a whole-file reply for this name:
+            // one that is registered but has no chunks, since a file sent whole
+            // never produces any. Used only for a sender too old to echo the tid
+            // back; the reply carries no owner, so with the same name shared by
+            // two peers the first match wins, and both are transfers of a file by
+            // that name with nothing received yet.
+            wholeFileTransfer: function (name) {
+                return Object.keys(this.transfers).filter(function (tid) {
+                    return this.transfers[tid].name == name && !this.chunks[tid];
+                }.bind(this))[0];
             },
             // A peer we were downloading from has gone. Nothing more is coming for
             // its transfers, so give them up rather than leave them part-finished
@@ -259,7 +322,7 @@ og_type: article
             cancelTransfers: function (peerId) {
                 Object.keys(this.transfers).forEach(function (tid) {
                     if (this.transfers[tid].owner == peerId) {
-                        this.endTransfer(tid);
+                        this.endTransfer(tid, "Download failed — the sender disconnected.");
                     }
                 }.bind(this));
             },
@@ -394,11 +457,14 @@ og_type: article
                 if (file.owner == this.peer.id || tid && this.chunks[tid]) return;
                 if (!this.peers[file.owner]) return;
                 tid = this.uid();
+                delete this.failures[key];
                 this.downloads[key] = tid;
                 this.transfers[tid] = {
                     owner: file.owner,
-                    key: key
+                    key: key,
+                    name: file.name
                 };
+                this.armStall(tid);
                 this.peers[file.owner].send({
                     action: "download",
                     data: {
@@ -463,6 +529,34 @@ og_type: article
                     return Math.floor(this.chunks[tid].progress / Number(this.chunks[tid].size) * 100);
                 }
                 return 0;
+            },
+            // The failure message to show beside a file's row, if its last
+            // download attempt was given up.
+            downloadError: function (file) {
+                var failure = this.failures[file.owner + file.name];
+                return failure ? failure.message : null;
+            },
+            // Failures with no row left to sit beside: when a peer is lost
+            // dropPeer also forgets everything it was sharing, so the row the
+            // user clicked disappears at the same moment its download fails.
+            // These are listed under the files instead, with the file's name,
+            // or the failure would never be mentioned at all.
+            orphanFailures: function () {
+                var listed = {};
+                this.allFiles().forEach(function (file) {
+                    listed[file.owner + file.name] = true;
+                });
+                return Object.keys(this.failures).filter(function (key) {
+                    return !listed[key];
+                }).map(function (key) {
+                    return this.failures[key];
+                }.bind(this));
+            },
+            // Nothing clears an orphaned failure on its own — the file it was
+            // for is no longer on offer, so there is no Download button left to
+            // retry and reset it.
+            dismissFailure: function (key) {
+                delete this.failures[key];
             },
             changePeerId() {
                 sessionStorage.removeItem("peerId");
@@ -535,6 +629,12 @@ og_type: article
         border-radius: 2px;
         transition: width 0.3s;
     }
+
+    /* Sits under its own file row, indented to line up with the row's text. */
+    .file-error {
+        margin: 0;
+        padding: 0 var(--space-4) var(--space-3);
+    }
 </style>
 {{end}}
 
@@ -586,9 +686,19 @@ og_type: article
                 <div class="progress-bar" x-show="downloadProgress(file) > 0">
                     <div class="progress-fill" x-bind:style="'width: '+downloadProgress(file)+'%'"></div>
                 </div>
+                <p class="file-error text-sm text-danger" x-show="downloadError(file)"
+                    x-text="downloadError(file)"></p>
             </div>
         </template>
     </div>
+
+    <template x-for="failure in orphanFailures()" :key="failure.key">
+        <p class="text-sm text-danger mt-2">
+            <strong x-text="failure.name"></strong>
+            <span x-text="failure.message"></span>
+            <button class="btn btn-outline btn-sm" x-on:click="dismissFailure(failure.key)">Dismiss</button>
+        </p>
+    </template>
 </div>
 {{end}}
 
