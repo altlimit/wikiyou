@@ -10,20 +10,6 @@ og_type: article
 ---
 {{define "addHead"}}
 <script>
-    (function (d) {
-        if (d.currentScript) {
-            var s = d.createElement("script");
-            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
-            s.defer = true;
-            d.head.appendChild(s);
-        } else {
-            var s = d.createElement("script");
-            s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine-ie11.min.js";
-            d.head.appendChild(s);
-        }
-    })(document);
-</script>
-<script>
     function calculator() {
         return {
             principal: 0,

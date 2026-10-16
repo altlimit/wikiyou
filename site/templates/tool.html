@@ -3,6 +3,15 @@
 
 <head>
     {{template "head" .}}
+
+    {{/* Alpine 2.2.4, vendored at site/src/js/alpine.js, because tools must work
+         offline in a plain browser with no third-party request. Every tool page
+         gets it from here, so a new tool just uses x-data/x-model/x-text and
+         defines its component function in its own `addHead` block — do not add a
+         CDN <script> tag back. `defer` runs it after parsing but before
+         DOMContentLoaded, which is when Alpine starts, so the component
+         functions declared in `addHead` are already defined by then. */}}
+    <script src="{{.BasePath}}js/alpine.js" defer></script>
 </head>
 
 <body>

@@ -380,6 +380,18 @@ og_type: article
     <code>addHead</code> block.
 </p>
 
+<p><a href="https://github.com/alpinejs/alpine" target="_blank" rel="noopener">Alpine.js</a> 2.2.4 is already loaded on
+    every tool page, so you can use <code>x-data</code>, <code>x-model</code> and <code>x-text</code> straight away —
+    just declare the component function in your <code>addHead</code> block. Do not add a <code>&lt;script&gt;</code> tag
+    for it.</p>
+
+<div class="alert alert-info">
+    <p><strong>Tools must work offline.</strong> No CDN tags, no external scripts or stylesheets, no network requests
+        and no tracking — everything runs client-side in a plain browser. Alpine is served from
+        <code>/js/alpine.js</code> in this repository for exactly that reason. If you need another small library,
+        commit it to <code>site/src/js/</code> along with its license rather than linking to a CDN.</p>
+</div>
+
 <div class="code-block">
     <span class="code-label">HTML</span>
     <pre><code>---
