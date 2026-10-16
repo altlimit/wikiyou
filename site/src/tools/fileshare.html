@@ -9,14 +9,22 @@ category_label: Tools
 og_type: article
 ---
 {{define "addHead"}}
-<script src="https://unpkg.com/peerjs@1.3.0/dist/peerjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+{{/* PeerJS 1.3.0 and QRCode.js 0.0.2, vendored at site/src/js/ alongside their
+     MIT notices, the same way Alpine is. Both run entirely in the browser — the
+     QR code is drawn locally and PeerJS only talks to our own signalling host —
+     so neither belongs on a third-party CDN. `defer` keeps them non-blocking;
+     deferred scripts run in document order, so Peer and QRCode exist before
+     Alpine (deferred too, from tool.html) calls init below. */}}
+<script src="{{.BasePath}}js/peerjs.min.js" defer></script>
+<script src="{{.BasePath}}js/qrcode.min.js" defer></script>
 <script>
     window.onbeforeunload = function () {
         return "Are you sure you want to leave?";
     }
-    axios.get("https://peerjs.wikiyou.org");
+    // Wake the signalling host before `new Peer(...)` opens its socket. The
+    // response is never read, so no-cors is enough and a failure here must not
+    // stop the page: the Peer error handler already reports a dead signaller.
+    fetch("https://peerjs.wikiyou.org", { mode: "no-cors", cache: "no-store" }).catch(function () {});
     function share() {
         return {
             peer: null,
