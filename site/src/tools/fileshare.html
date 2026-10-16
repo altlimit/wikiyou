@@ -163,6 +163,17 @@ og_type: article
                                     // case below.
                                     var seq = 0;
                                     this.parseFile(file, function (chunk, done) {
+                                        // The recipient can leave part-way through a
+                                        // multi-megabyte file, and its peers entry goes
+                                        // with it, so look the connection up again on
+                                        // every chunk. Stopping the read matters as much
+                                        // as not calling send() on nothing: the rest of
+                                        // the file would otherwise be read, and buffered,
+                                        // for somebody who is no longer there.
+                                        var conn = this.peers[r.data.peerId];
+                                        if (!conn) {
+                                            return false;
+                                        }
                                         var data = started ? {
                                             blob: chunk,
                                             tid: transferId,
@@ -180,7 +191,7 @@ og_type: article
                                         }
                                         seq++;
                                         started = true;
-                                        this.peers[r.data.peerId].send({
+                                        conn.send({
                                             action: "chunks",
                                             data: data
                                         });
@@ -495,6 +506,11 @@ og_type: article
                 }
                 return allFiles;
             },
+            // Read a file in 64 KiB blocks, handing each to callback(chunk, done)
+            // in order. A callback that returns false stops the read there and
+            // the rest of the file is never touched — the only way to abandon a
+            // transfer whose recipient has gone, since the reads chain off each
+            // other and nothing else can interrupt them.
             parseFile: function (file, callback) {
                 var fileSize = file.size;
                 var chunkSize = 64 * 1024;
@@ -505,7 +521,9 @@ og_type: article
                     if (evt.target.error == null) {
                         offset += evt.target.result.byteLength !== undefined ? evt.target.result
                             .byteLength : evt.target.result.length;
-                        callback(evt.target.result, offset >= fileSize);
+                        if (callback(evt.target.result, offset >= fileSize) === false) {
+                            return;
+                        }
                     } else {
                         return;
                     }
