@@ -5,8 +5,22 @@
    without writing custom CSS.
    ============================================================ */
 
-/* ---------- Google Fonts ---------- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap');
+/* ---------- Fonts ---------- */
+/* Inter is vendored at site/src/fonts/inter.woff2 so no page makes a third-party
+   request. It is a variable font (wght 100-900), latin subset only: the
+   unicode-range below keeps the browser from using it for scripts whose glyphs
+   this subset does not contain. The path is relative to this stylesheet, not
+   site-absolute, so it survives being served from a sub-path.
+   --font-serif names Merriweather but ships no file: it resolves to a local copy
+   if the reader has one, otherwise Georgia, exactly as --font-mono already does. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/inter.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 /* ---------- CSS Custom Properties ---------- */
 :root {
