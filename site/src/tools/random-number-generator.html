@@ -1,0 +1,394 @@
+---
+updated: "2026-10-22"
+template: tool.html
+title: Random Number Generator
+description: "Generate random whole numbers in any range, with a choice of how many and an option to draw without duplicates. Runs entirely in your browser."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    function randomNumbers() {
+        return {
+            min: 1,
+            max: 100,
+            count: 1,
+            unique: false,
+            sorted: false,
+            separator: "newline",
+            numbers: [],
+            copied: false,
+            // Keeps every range inside Number.MAX_SAFE_INTEGER, so the span is
+            // always an exact integer and the bit sampling below stays uniform.
+            LIMIT: 1000000000000,
+            MAX_COUNT: 1000,
+            whole: function (v, dir) {
+                var x = parseFloat(v);
+                if (!isFinite(x)) return null;
+                if (x > this.LIMIT) x = this.LIMIT;
+                if (x < -this.LIMIT) x = -this.LIMIT;
+                return dir === "up" ? Math.ceil(x) : Math.floor(x);
+            },
+            lo: function () {
+                return this.whole(this.min, "up");
+            },
+            hi: function () {
+                return this.whole(this.max, "down");
+            },
+            howMany: function () {
+                var n = parseFloat(this.count);
+                if (!isFinite(n)) return 0;
+                n = Math.floor(n);
+                if (n < 1) return 0;
+                if (n > this.MAX_COUNT) return this.MAX_COUNT;
+                return n;
+            },
+            // Count of whole numbers in [lo, hi] inclusive, or 0 if empty.
+            span: function () {
+                var a = this.lo(), b = this.hi();
+                if (a === null || b === null || b < a) return 0;
+                return b - a + 1;
+            },
+            error: function () {
+                if (this.lo() === null || this.hi() === null) {
+                    return "Enter a minimum and a maximum to draw between.";
+                }
+                if (this.hi() < this.lo()) {
+                    // Bounds in the right order but with no whole number between
+                    // them, e.g. 2.5 to 2.9, is a different mistake from 10 to 1.
+                    if (parseFloat(this.min) <= parseFloat(this.max)) {
+                        return "There is no whole number between " + parseFloat(this.min) + " and " +
+                            parseFloat(this.max) + ". Widen the range.";
+                    }
+                    return "The minimum must be less than or equal to the maximum.";
+                }
+                if (this.howMany() < 1) {
+                    return "Ask for at least one number.";
+                }
+                if (this.unique && this.howMany() > this.span()) {
+                    return "You asked for " + this.howMany() + " numbers with no duplicates, but there are only " +
+                        this.span() + " whole numbers from " + this.lo() + " to " + this.hi() + ".";
+                }
+                return "";
+            },
+            ok: function () {
+                return this.error() === "";
+            },
+            secure: function () {
+                var c = window.crypto || window.msCrypto;
+                return !!(c && c.getRandomValues);
+            },
+            // Uniform integer in [0, range). Draws the smallest whole number of
+            // random bits that covers the range and rejects anything above it,
+            // which keeps every value equally likely — a plain modulo of a fixed
+            // 32-bit word would favour the low end of a range that is not a
+            // power of two. Ranges wider than 2^32 are assembled from two words.
+            randomBelow: function (range) {
+                if (!(range > 1)) return 0;
+                var p = 1, bits = 0;
+                while (p < range) { p *= 2; bits += 1; }
+                var c = window.crypto || window.msCrypto;
+                var words = this.secure() ? new Uint32Array(2) : null;
+                for (; ;) {
+                    var v;
+                    if (words) {
+                        c.getRandomValues(words);
+                        if (bits <= 32) {
+                            v = bits === 32 ? words[0] : words[0] % Math.pow(2, bits);
+                        } else {
+                            v = (words[0] % Math.pow(2, bits - 32)) * 4294967296 + words[1];
+                        }
+                    } else {
+                        v = Math.floor(Math.random() * p);
+                    }
+                    if (v < range) return v;
+                }
+            },
+            generate: function () {
+                this.copied = false;
+                if (!this.ok()) {
+                    this.numbers = [];
+                    return;
+                }
+                var lo = this.lo(), size = this.span(), n = this.howMany();
+                var out = [];
+                var i;
+                if (this.unique) {
+                    // Partial Fisher-Yates over the virtual array [lo..hi], with a
+                    // map holding only the positions actually swapped — so a draw
+                    // of 6 from a billion costs six steps, not a billion.
+                    var moved = {};
+                    for (i = 0; i < n; i++) {
+                        var j = i + this.randomBelow(size - i);
+                        var picked = moved[j] === undefined ? j : moved[j];
+                        moved[j] = moved[i] === undefined ? i : moved[i];
+                        out.push(lo + picked);
+                    }
+                } else {
+                    for (i = 0; i < n; i++) {
+                        out.push(lo + this.randomBelow(size));
+                    }
+                }
+                if (this.sorted) out.sort(function (a, b) { return a - b; });
+                this.numbers = out;
+            },
+            output: function () {
+                var seps = { newline: "\n", comma: ", ", space: " " };
+                return this.numbers.join(seps[this.separator] || "\n");
+            },
+            first: function () {
+                return this.numbers.length ? String(this.numbers[0]) : "—";
+            },
+            total: function () {
+                var s = 0;
+                for (var i = 0; i < this.numbers.length; i++) s += this.numbers[i];
+                return s;
+            },
+            lowest: function () {
+                return Math.min.apply(null, this.numbers);
+            },
+            highest: function () {
+                return Math.max.apply(null, this.numbers);
+            },
+            mean: function () {
+                if (!this.numbers.length) return 0;
+                return Math.round((this.total() / this.numbers.length) * 100) / 100;
+            },
+            copy: function () {
+                var value = this.output();
+                if (value === "") return;
+                var self = this;
+                var done = function () {
+                    self.copied = true;
+                    setTimeout(function () { self.copied = false; }, 2000);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(value).then(done, function () { self.fallbackCopy(done); });
+                } else {
+                    this.fallbackCopy(done);
+                }
+            },
+            // Older browsers without the async clipboard API: copy out of a
+            // throwaway textarea, so this works even when the list box is hidden.
+            fallbackCopy: function (done) {
+                var el = document.createElement("textarea");
+                el.value = this.output();
+                el.setAttribute("readonly", "readonly");
+                el.style.position = "fixed";
+                el.style.opacity = "0";
+                document.body.appendChild(el);
+                el.select();
+                try { document.execCommand("copy"); done(); } catch (e) { }
+                document.body.removeChild(el);
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="randomNumbers()" x-init="generate()" class="grid-2" style="margin:0" @submit.prevent="generate()">
+    <div>
+        <div class="form-group">
+            <label for="min">Minimum (inclusive)</label>
+            <input type="text" id="min" x-model="min" placeholder="1" @input="generate()">
+        </div>
+
+        <div class="form-group">
+            <label for="max">Maximum (inclusive)</label>
+            <input type="text" id="max" x-model="max" placeholder="100" @input="generate()">
+        </div>
+
+        <div class="form-group">
+            <label for="count">How Many Numbers (1&ndash;1000)</label>
+            <input type="text" id="count" x-model="count" placeholder="1" @input="generate()">
+        </div>
+
+        <div class="form-group">
+            <label for="unique" class="flex" style="align-items:center;gap:.5rem">
+                <input type="checkbox" id="unique" x-model="unique" @change="generate()">
+                <span>No duplicates (draw each number at most once)</span>
+            </label>
+            <label for="sorted" class="flex" style="align-items:center;gap:.5rem">
+                <input type="checkbox" id="sorted" x-model="sorted" @change="generate()">
+                <span>Sort the results from lowest to highest</span>
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label for="separator">Separate Results With</label>
+            <select id="separator" x-model="separator" @change="copied = false">
+                <option value="newline">One number per line</option>
+                <option value="comma">Commas &mdash; 4, 17, 23</option>
+                <option value="space">Spaces &mdash; 4 17 23</option>
+            </select>
+        </div>
+
+        <p class="text-xs text-muted">Everything is calculated in your browser &mdash; nothing you type is uploaded
+            anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Your random <span x-text="howMany() === 1 ? 'number' : 'numbers'"></span>
+            </p>
+            <div class="form-result" style="color:var(--color-link);word-break:break-all" x-show="numbers.length <= 1"
+                x-text="first()"></div>
+
+            <div class="form-group" x-show="numbers.length > 1">
+                <label for="numberOutput" class="text-sm text-light">
+                    <span x-text="numbers.length"></span> numbers from <span x-text="lo()"></span> to
+                    <span x-text="hi()"></span>
+                </label>
+                <textarea id="numberOutput" :value="output()" rows="6" readonly spellcheck="false"
+                    style="font-family:monospace"></textarea>
+            </div>
+
+            <div class="flex mt-4" style="gap:.5rem;justify-content:center">
+                <button type="button" @click="generate()">Generate again</button>
+                <button type="button" @click="copy()" x-show="numbers.length > 0">
+                    <span x-text="copied ? 'Copied!' : (numbers.length > 1 ? 'Copy all' : 'Copy')"></span>
+                </button>
+            </div>
+
+            <p class="text-sm mt-4" x-show="numbers.length > 1">
+                Lowest <strong x-text="lowest()"></strong>, highest <strong x-text="highest()"></strong>,
+                sum <strong x-text="total()"></strong>, mean <strong x-text="mean()"></strong>.
+            </p>
+            <p class="text-xs text-muted mt-2" x-show="numbers.length > 0 &amp;&amp; !unique">
+                Duplicates are allowed, so the same number can appear more than once &mdash; that is what independent
+                draws look like.
+            </p>
+            <div class="alert alert-info mt-4" x-show="!ok()">
+                <p class="text-sm" x-text="error()"></p>
+            </div>
+            <p class="text-xs text-muted mt-2" x-show="!secure()">
+                Your browser does not expose window.crypto.getRandomValues, so this fell back to Math.random &mdash;
+                fine for a dice roll, not for anything anyone could gain from predicting.
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this random number generator does</h2>
+<p>
+    This tool draws whole numbers at random from a range you choose. Both ends are <strong>inclusive</strong>: a range of
+    1 to 100 can return 1 and can return 100. You can draw a single number, or up to 1000 at once, and you can choose
+    whether the draw allows duplicates or picks each number at most once.
+</p>
+<p>
+    Randomness comes from <strong>window.crypto.getRandomValues</strong>, the browser's cryptographically secure random
+    number generator. Nothing is generated on a server, nothing is seeded from the clock, and nothing you enter leaves
+    the page &mdash; the numbers exist only in the tab you are looking at and are gone when you reload. If a very old
+    browser does not provide <code>getRandomValues</code>, the tool falls back to <code>Math.random</code> and says so
+    on screen, because <code>Math.random</code> is not designed to be unpredictable.
+</p>
+
+<h2>How to use it</h2>
+<ol>
+    <li>Set the <strong>minimum</strong> and <strong>maximum</strong>. Negative numbers are fine, and so is a range of
+        one value, where the answer is simply that value.</li>
+    <li>Set <strong>how many numbers</strong> you want. One is a single draw; six is a lottery line; 50 is a sample.</li>
+    <li>Turn on <strong>No duplicates</strong> for a draw where each number can appear once &mdash; raffle tickets,
+        lottery numbers, picking winners from a numbered list. Leave it off for independent draws such as dice rolls,
+        where repeats are expected and normal.</li>
+    <li>Optionally <strong>sort</strong> the results, and pick how they are separated, then copy the list.</li>
+</ol>
+<p>
+    Every change regenerates immediately, and <strong>Generate again</strong> redraws without changing any setting.
+</p>
+
+<h2>How to read the result</h2>
+<p>
+    A single draw is shown as one large number. A draw of two or more is shown as a list, with the lowest value, the
+    highest value, the sum and the mean underneath. Those summaries describe <em>this</em> draw only &mdash; they are not
+    a property of the range, and they will move every time you redraw. That is the point: a fair generator produces an
+    uneven-looking sample. Rolling a die six times rarely gives you each face once, and a run of three 5s in twenty
+    draws is unremarkable rather than evidence of a broken generator.
+</p>
+
+<h2>Uniform, and why the maths matters</h2>
+<p>
+    A draw is <strong>uniform</strong> when every value in the range is equally likely, with probability
+    <strong>1 &divide; (max &minus; min + 1)</strong>. In a 1-to-100 range that is 1% per number.
+</p>
+<p>
+    Getting there takes a little more than one line of code. The browser hands out random 32-bit integers &mdash; values
+    from 0 to 4,294,967,295 &mdash; and the obvious trick of taking the remainder modulo the range size introduces
+    <em>modulo bias</em> whenever the range does not divide 2<sup>32</sup> evenly: the low values of the range get one
+    extra chance each, and are slightly more likely than the high ones. This tool instead takes the smallest number of
+    random bits that covers the range and discards any value that lands above it, redrawing until one falls inside. That
+    is called <strong>rejection sampling</strong>; it costs an occasional extra draw and returns an exactly uniform
+    result. Ranges wider than 2<sup>32</sup> values are assembled from two 32-bit words.
+</p>
+<p>
+    For a draw with no duplicates, picking numbers one at a time and throwing away repeats gets slow as the draw fills
+    the range. This tool uses a <strong>partial Fisher-Yates shuffle</strong> instead, recording only the positions it
+    actually swaps, so drawing 6 unique numbers from a range of a billion takes six steps rather than a billion. Each
+    possible set and ordering is equally likely.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Say you want a lottery line: six numbers from <strong>1 to 49</strong>, no duplicates, sorted. The range holds
+    49 &minus; 1 + 1 = <strong>49</strong> whole numbers, so the first pick has a 1-in-49 chance of being any given
+    number, the second has 1 in 48 among the numbers left, and so on.
+</p>
+<ul>
+    <li>Entering min 1, max 49, count 6 with <em>No duplicates</em> on returns a list such as
+        <strong>3, 11, 17, 28, 36, 44</strong> &mdash; a different one each time you press Generate again.</li>
+    <li>The number of distinct unordered sets of 6 from 49 is C(49, 6) = <strong>13,983,816</strong>, so any particular
+        line comes up with that probability.</li>
+    <li>Turn <em>No duplicates</em> off and the same inputs model six independent draws, where the chance of at least
+        one repeat is about 28% &mdash; the birthday problem in miniature.</li>
+</ul>
+
+<h2>Edge cases this tool refuses</h2>
+<ul>
+    <li><strong>Minimum above maximum.</strong> The generator stops and asks you to swap them rather than returning an
+        empty or nonsensical answer.</li>
+    <li><strong>A range with no whole number in it.</strong> Decimal bounds are pulled inward to whole numbers &mdash;
+        the minimum rounds up, the maximum rounds down &mdash; so 2.5 to 2.9 contains nothing to draw and says so.</li>
+    <li><strong>More unique numbers than the range holds.</strong> Asking for 50 distinct numbers between 1 and 10 is
+        impossible; the tool names the limit instead of looping forever or silently repeating values.</li>
+    <li><strong>Empty or non-numeric input</strong> is treated as missing rather than as zero, and a count below 1 is
+        rejected. Nothing here can return <code>NaN</code>.</li>
+    <li><strong>Very large bounds</strong> are clamped to &plusmn;1,000,000,000,000, which keeps every range inside the
+        exact-integer limit of JavaScript numbers.</li>
+</ul>
+
+<h2>What this is and is not good for</h2>
+<p>
+    Because the numbers come from the browser's cryptographic generator, they are suitable for raffles, sampling,
+    shuffling, games, test data and picking winners. Two caveats worth stating plainly:
+</p>
+<ul>
+    <li><strong>It is not an audited draw.</strong> Nothing here is recorded, timestamped or witnessed, so for a prize
+        draw that someone might dispute you want a procedure that produces evidence, not just a number on a screen.</li>
+    <li><strong>It is not a seeded generator.</strong> There is no way to reproduce a previous draw, by design. If you
+        need repeatable randomness for a simulation, you want a pseudo-random generator with a seed you control.</li>
+</ul>
+<p>
+    True randomness, in the physical sense, comes from measuring something unpredictable in the world. What a browser
+    gives you is a <em>cryptographically secure pseudo-random</em> stream: the operating system collects entropy from
+    hardware events and stretches it with a cipher, so the output is computationally indistinguishable from random even
+    to someone who has seen all of it so far.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues" target="_blank"
+            rel="noopener">MDN &mdash; Crypto.getRandomValues()</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random"
+            target="_blank" rel="noopener">MDN &mdash; Math.random()</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle" target="_blank" rel="noopener">Fisher&ndash;Yates
+            shuffle &mdash; Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Discrete_uniform_distribution" target="_blank" rel="noopener">Discrete
+            uniform distribution &mdash; Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Cryptographically_secure_pseudorandom_number_generator" target="_blank"
+            rel="noopener">Cryptographically secure pseudorandom number generator &mdash; Wikipedia</a></li>
+</ul>
+{{end}}
