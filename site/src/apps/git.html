@@ -1,0 +1,104 @@
+---
+updated: "2026-10-23"
+template: profile.html
+title: Git
+description: "Git is a free and open-source distributed version control system, created by Linus Torvalds in 2005 for the development of the Linux kernel."
+subtitle: Distributed version control system
+category: apps
+category_label: Apps
+type: Open-Source Software
+industry: Version Control / Developer Tools
+founded: "2005"
+website: "https://git-scm.com"
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    Git is a distributed version control system used to track changes to files, most commonly the source code of
+    software projects. It is free and open-source software, distributed under the terms of the GNU General Public
+    License, version 2, and is written primarily in the C programming language. Its command-line program is invoked as
+    <code>git</code>; the program's own manual page describes it as &ldquo;the stupid content tracker&rdquo;.
+</p>
+<p>
+    Git is distributed rather than centralized: a copy of a repository obtained with <code>git clone</code> is itself a
+    complete repository, carrying the project's full history rather than a single revision checked out from a central
+    server. Recording a commit, creating a branch, examining history, and comparing revisions are therefore local
+    operations that require no network connection and no coordinating server. Exchanging work between repositories is a
+    separate, explicit step.
+</p>
+
+<h2>History</h2>
+<p>
+    Git was created in 2005 by <strong>Linus Torvalds</strong>, the original author of the Linux kernel, and was first
+    released in April of that year. It was written in response to a practical problem in kernel development: the
+    project had been using the proprietary system BitKeeper, and when free use of that tool was withdrawn, the kernel
+    developers needed a replacement capable of handling a project of the kernel's size and development pattern. Git was
+    written for that purpose and the kernel was moved onto it.
+</p>
+<p>
+    Shortly after the initial release, Torvalds handed maintainership of the project to <strong>Junio C
+        Hamano</strong>, who has led it since. Git is developed in the open by a large group of contributors,
+    coordinated through a public mailing list on which patches are posted and reviewed, and it has continued to be
+    released as free software throughout.
+</p>
+
+<h2>Design Goals</h2>
+<p>
+    The requirements that shaped Git follow from the project it was written for. Its stated design goals include:
+</p>
+<ul>
+    <li><strong>Speed</strong> &mdash; Common operations are intended to be fast, which is reinforced by the fact that
+        most of them touch only the local repository.</li>
+    <li><strong>A simple design</strong> &mdash; The underlying data model is deliberately small, with a few object
+        types and a single storage mechanism underneath the wide range of commands built on top of them.</li>
+    <li><strong>Strong support for non-linear development</strong> &mdash; Branching and merging are ordinary, cheap
+        operations rather than exceptional ones, so that many lines of development can proceed in parallel and be
+        integrated afterwards.</li>
+    <li><strong>Full distribution</strong> &mdash; No repository is privileged by the system itself; any designation of
+        one copy as authoritative is a convention adopted by a project, not a property of the tool.</li>
+    <li><strong>Efficiency on large projects</strong> &mdash; The system was built to remain workable on a codebase and
+        history of the scale of the Linux kernel.</li>
+</ul>
+
+<h2>How It Works</h2>
+<p>
+    Git stores the states of a project in a content-addressable object database. There are four kinds of object: a
+    <strong>blob</strong>, holding the contents of a file; a <strong>tree</strong>, listing filenames together with the
+    blobs and subtrees they refer to; a <strong>commit</strong>, pointing at one tree and at the commits that preceded
+    it; and an annotated <strong>tag</strong>. Each object is named by a cryptographic hash of its own contents &mdash;
+    originally SHA-1, with an alternative SHA-256 object format added later &mdash; so a name both identifies an object
+    and fixes its contents. Because a commit names its parents, the hash of a commit transitively covers the history
+    that leads to it.
+</p>
+<p>
+    A commit therefore records a snapshot of the whole tracked tree rather than a set of per-file edits; differences
+    between revisions are computed by comparing snapshots when they are needed. Work in progress sits in two further
+    places: the <strong>working tree</strong>, which is the checked-out copy of the files on disk, and the
+    <strong>index</strong> or staging area, which holds the content that the next commit will record. Adding a change
+    with <code>git add</code> copies it into the index; <code>git commit</code> turns the index into a new commit.
+</p>
+<p>
+    Branches and tags are references &mdash; names that point at a commit. Creating a branch writes one such name, which
+    is why branching is inexpensive, and advancing a branch moves the pointer to each new commit. Separate lines of
+    development are brought back together by <code>git merge</code>, which creates a commit with more than one parent,
+    or by <code>git rebase</code>, which reapplies commits onto a different base. Other repositories are registered as
+    <strong>remotes</strong>, and <code>git fetch</code>, <code>git pull</code>, and <code>git push</code> transfer
+    objects and update references between them.
+</p>
+
+<h2>Adoption and Ecosystem</h2>
+<p>
+    Git has become the most widely used version control system in software development, in open-source projects and in
+    commercial ones. Its distributed model also underlies a category of hosting services that provide a shared
+    repository on the network together with issue tracking, code review, and related facilities; among the best known
+    are <a href="/companies/github/">GitHub</a>, GitLab, and Bitbucket. These services are built around Git but are
+    separate from it, and a Git repository can be used entirely without them.
+</p>
+<p>
+    Documentation, downloads for common operating systems, and the freely available book <em>Pro Git</em> by Scott
+    Chacon and Ben Straub are published on the project's <a href="https://git-scm.com" target="_blank"
+        rel="noopener">official website</a>. Reference documentation for each command is also installed with the program
+    itself and can be read with <code>git help</code>.
+</p>
+{{end}}
