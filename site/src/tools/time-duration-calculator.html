@@ -1,0 +1,298 @@
+---
+updated: "2026-10-29"
+template: tool.html
+title: Time Duration Calculator
+description: "Calculate the time between two times or two dates and times, in days, hours and minutes, with totals in hours and minutes. Handles overnight spans."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    function durationCalc() {
+        return {
+            startDate: "",
+            startTime: "09:00",
+            endDate: "",
+            endTime: "17:30",
+
+            // Build a UTC timestamp without the two-digit-year remapping of Date.UTC().
+            // Working in UTC keeps daylight-saving changes out of the arithmetic.
+            utc: function (y, m, d) {
+                var t = new Date(0);
+                t.setUTCFullYear(y, m - 1, d);
+                t.setUTCHours(0, 0, 0, 0);
+                return t.getTime();
+            },
+            // Whole days since 1970-01-01 for a YYYY-MM-DD string, null if blank, false if invalid.
+            day: function (s) {
+                s = String(s || "").trim();
+                if (s === "") return null;
+                var p = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
+                if (!p) return false;
+                var y = parseInt(p[1], 10), m = parseInt(p[2], 10), d = parseInt(p[3], 10);
+                if (m < 1 || m > 12 || d < 1) return false;
+                var ms = this.utc(y, m, d);
+                if (new Date(ms).getUTCDate() !== d) return false;
+                return Math.round(ms / 86400000);
+            },
+            // Minutes after midnight for an HH:MM string, null if blank, false if invalid.
+            minute: function (s) {
+                s = String(s || "").trim();
+                if (s === "") return null;
+                var p = /^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/.exec(s);
+                if (!p) return false;
+                var h = parseInt(p[1], 10), m = parseInt(p[2], 10);
+                if (h > 23 || m > 59) return false;
+                return h * 60 + m;
+            },
+
+            calc: function () {
+                var sd = this.day(this.startDate), ed = this.day(this.endDate);
+                var st = this.minute(this.startTime), et = this.minute(this.endTime);
+                if (sd === false || ed === false) return { error: "One of the dates is not a real calendar date." };
+                if (st === false || et === false) return { error: "Times must be between 00:00 and 23:59." };
+
+                if (sd === null && ed === null) {
+                    if (st === null || et === null) {
+                        return { prompt: "Enter a start and an end time, and dates too if the span is longer than a day." };
+                    }
+                    var diff = et - st;
+                    if (diff < 0) {
+                        return {
+                            ok: true, minutes: diff + 1440,
+                            note: "The end time is earlier than the start time, so it is read as the next day."
+                        };
+                    }
+                    return {
+                        ok: true, minutes: diff,
+                        note: diff === 0 ? "Start and end are the same time. For a full day, enter both dates." : ""
+                    };
+                }
+                if (sd === null || ed === null) {
+                    return { error: "Enter both dates, or leave both blank to measure between two times." };
+                }
+
+                var start = sd * 1440 + (st || 0), end = ed * 1440 + (et || 0);
+                var blank = st === null || et === null;
+                if (end < start) {
+                    return { error: "The end is before the start. Swap them, or check the dates.", reversed: true };
+                }
+                return {
+                    ok: true, minutes: end - start,
+                    note: blank ? "A blank time is taken as midnight (00:00) at the start of that day." : ""
+                };
+            },
+            ok: function () {
+                return !!this.calc().ok;
+            },
+            mins: function () {
+                var r = this.calc();
+                return r.ok ? r.minutes : 0;
+            },
+            message: function () {
+                var r = this.calc();
+                return r.error || r.prompt || "";
+            },
+            note: function () {
+                return this.calc().note || "";
+            },
+            reversed: function () {
+                return !!this.calc().reversed;
+            },
+            swap: function () {
+                var d = this.startDate, t = this.startTime;
+                this.startDate = this.endDate;
+                this.startTime = this.endTime;
+                this.endDate = d;
+                this.endTime = t;
+            },
+            plural: function (n, word) {
+                return n.toLocaleString("en-US") + " " + word + (n === 1 ? "" : "s");
+            },
+            breakdown: function () {
+                if (!this.ok()) return "—";
+                var m = this.mins();
+                var d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+                var parts = [];
+                if (d) parts.push(this.plural(d, "day"));
+                if (h) parts.push(this.plural(h, "hour"));
+                if (mm || !parts.length) parts.push(this.plural(mm, "minute"));
+                return parts.join(", ");
+            },
+            clock: function () {
+                var m = this.mins(), h = Math.floor(m / 60), mm = m % 60;
+                return h.toLocaleString("en-US") + ":" + (mm < 10 ? "0" + mm : mm);
+            },
+            totalHours: function () {
+                return (Math.round((this.mins() / 60) * 100) / 100).toLocaleString("en-US");
+            },
+            totalMinutes: function () {
+                return this.mins().toLocaleString("en-US");
+            },
+            weeks: function () {
+                var d = Math.floor(this.mins() / 1440);
+                if (d < 7) return "";
+                return this.plural(Math.floor(d / 7), "week") + (d % 7 ? " and " + this.plural(d % 7, "day") : "");
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<div x-data="durationCalc()" class="grid-2">
+    <div>
+        <div class="form-group">
+            <label for="startDate">Start Date (optional)</label>
+            <input type="date" id="startDate" x-model="startDate">
+        </div>
+
+        <div class="form-group">
+            <label for="startTime">Start Time</label>
+            <input type="time" id="startTime" x-model="startTime">
+        </div>
+
+        <div class="form-group">
+            <label for="endDate">End Date (optional)</label>
+            <input type="date" id="endDate" x-model="endDate">
+        </div>
+
+        <div class="form-group">
+            <label for="endTime">End Time</label>
+            <input type="time" id="endTime" x-model="endTime">
+        </div>
+
+        <p class="text-xs text-muted">Leave both dates blank to measure between two clock times; an end time earlier
+            than the start is read as the next day.</p>
+        <p class="text-xs text-muted">Everything is calculated in your browser &mdash; nothing you type is uploaded
+            anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Duration</p>
+            <div class="form-result" style="color:var(--color-link)" x-text="breakdown()"></div>
+        </div>
+
+        <div class="card" x-show="ok()">
+            <div class="flex" style="justify-content:space-between">
+                <span class="text-sm text-light">Total hours</span>
+                <strong x-text="totalHours()"></strong>
+            </div>
+            <div class="flex mt-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Hours and minutes</span>
+                <strong x-text="clock()"></strong>
+            </div>
+            <div class="flex mt-2" style="justify-content:space-between">
+                <span class="text-sm text-light">Total minutes</span>
+                <strong x-text="totalMinutes()"></strong>
+            </div>
+            <div class="flex mt-2" style="justify-content:space-between" x-show="weeks() !== ''">
+                <span class="text-sm text-light">In weeks</span>
+                <strong x-text="weeks()"></strong>
+            </div>
+        </div>
+
+        <p class="text-xs text-muted mt-2" x-show="ok() &amp;&amp; note() !== ''" x-text="note()"></p>
+
+        <div class="alert alert-info mt-4" x-show="!ok()">
+            <p class="text-sm" x-text="message()"></p>
+            <button type="button" class="btn btn-outline btn-sm mt-2" x-show="reversed()" @click="swap()">Swap start
+                and end</button>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is a time duration calculator?</h2>
+<p>
+    A time duration calculator measures how much time passes between a <strong>start</strong> and an
+    <strong>end</strong>. Give it two clock times and it returns the hours and minutes between them &mdash; a work shift,
+    a flight, a meeting. Give it two dates as well and it measures spans of any length, across midnight, month ends and
+    leap days, in days, hours and minutes.
+</p>
+
+<h2>How to use this calculator</h2>
+<ol>
+    <li>For a span within a day or overnight, enter a <strong>start time</strong> and an <strong>end time</strong> and
+        leave both dates blank. If the end time is earlier than the start time &mdash; 22:00 to 06:30 &mdash; the end is
+        read as the next morning.</li>
+    <li>For a span longer than a day, or one you want pinned to the calendar, fill in both <strong>dates</strong>. A
+        blank time next to a date is taken as midnight at the start of that day, so two dates on their own give the
+        whole days between them.</li>
+    <li>The result updates as you type.</li>
+</ol>
+
+<h2>How to read the result</h2>
+<p>
+    The large figure breaks the duration into <strong>days, hours and minutes</strong>, leaving out any part that is
+    zero. Underneath are the same span as one number in different units:
+</p>
+<ul>
+    <li><strong>Total hours</strong> is a decimal, rounded to two places &mdash; 8 hours 30 minutes is 8.5. This is the
+        form timesheets and hourly billing usually want.</li>
+    <li><strong>Hours and minutes</strong> is the same total written as H:MM, so 8.5 hours shows as 8:30 and a two-day
+        span as 48:00. It is a length of time, not a time of day.</li>
+    <li><strong>Total minutes</strong> is the exact whole-number count.</li>
+    <li><strong>In weeks</strong> appears once the span reaches seven days.</li>
+</ul>
+
+<h2>The formula</h2>
+<p>
+    Each moment is turned into a single count of minutes: the number of whole days since a fixed reference date, times
+    1,440 (the minutes in a day), plus the minutes since midnight. The duration is the end count minus the start count:
+</p>
+<p><strong>duration = (end day &times; 1440 + end minutes) &minus; (start day &times; 1440 + start minutes)</strong></p>
+<p>
+    That total is then split back up: days = &lfloor;total &divide; 1440&rfloor;, hours = &lfloor;remainder &divide;
+    60&rfloor;, and the minutes are what is left. When only times are given and the end is the smaller number, 1,440
+    minutes are added &mdash; that is the single step that handles crossing midnight.
+</p>
+
+<h2>Worked example</h2>
+<ul>
+    <li><strong>An overnight shift</strong> from 22:00 to 06:30, no dates. 06:30 is 390 minutes after midnight and 22:00
+        is 1,320, so 390 &minus; 1,320 = &minus;930. Negative means the shift crossed midnight: &minus;930 + 1,440 =
+        <strong>510 minutes</strong>, which is <strong>8 hours, 30 minutes</strong>, or 8.5 hours.</li>
+    <li><strong>A multi-day span</strong> from 29 October 2026 at 09:15 to 31 October 2026 at 17:45. That is 2 whole
+        days (2,880 minutes) plus 17:45 &minus; 09:15 = 8 hours 30 minutes (510 minutes), so <strong>3,390
+        minutes</strong> &mdash; <strong>2 days, 8 hours, 30 minutes</strong>, or 56.5 hours.</li>
+    <li><strong>Across a leap day</strong>, 28 February 2024 to 1 March 2024 with no times, is <strong>2 days</strong>,
+        because 2024 has a 29 February. The same dates in 2025 give 1 day.</li>
+</ul>
+
+<h2>Assumptions and edge cases</h2>
+<ul>
+    <li><strong>Clock time, not elapsed time across a daylight-saving change.</strong> The calculator counts every day
+        as 24 hours. On the night clocks go forward an overnight shift really lasts an hour less, and on the night they
+        go back an hour more; this tool does not know your time zone and does not adjust for it.</li>
+    <li><strong>Both times are in the same time zone.</strong> For a flight between zones, convert both ends to one zone
+        first.</li>
+    <li><strong>Resolution is one minute.</strong> Seconds are ignored.</li>
+    <li><strong>An end before the start</strong>, when dates are given, is refused with an offer to swap them rather than
+        shown as a negative duration. Without dates the same input is the overnight case above.</li>
+    <li><strong>Equal start and end times</strong> with no dates give zero, not 24 hours; enter dates for a full
+        day.</li>
+    <li><strong>Only one date</strong> filled in is refused, because it is ambiguous whether the other end is the same
+        day. <strong>Impossible dates</strong> such as 31 April and <strong>impossible times</strong> such as 25:00 are
+        rejected rather than rolled over into the next month or day.</li>
+    <li>The calendar is the proleptic Gregorian calendar used by JavaScript dates, which is right for any modern date
+        and does not reflect the historical switch from the Julian calendar.</li>
+</ul>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/ISO_8601" target="_blank" rel="noopener">ISO 8601 &mdash;
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Daylight_saving_time" target="_blank" rel="noopener">Daylight saving
+            time &mdash; Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Leap_year" target="_blank" rel="noopener">Leap year &mdash;
+            Wikipedia</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date" target="_blank"
+            rel="noopener">MDN &mdash; Date</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar" target="_blank" rel="noopener">Proleptic
+            Gregorian calendar &mdash; Wikipedia</a></li>
+</ul>
+{{end}}
