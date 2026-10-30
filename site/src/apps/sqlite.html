@@ -1,0 +1,87 @@
+---
+updated: "2026-10-30"
+template: profile.html
+title: SQLite
+description: "SQLite is a public-domain relational database engine written in C, embedded directly into applications and storing a whole database in a single file."
+subtitle: Embedded relational database engine
+category: apps
+category_label: Apps
+type: Public-Domain Software
+industry: Database Software
+founded: "2000"
+website: "https://www.sqlite.org"
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    SQLite is a relational database engine implemented as a library written in the C programming language. Unlike
+    client&ndash;server database systems, it does not run as a separate server process: the library is linked into the
+    application that uses it, and reads and writes an ordinary file on disk directly. A complete database &mdash; its
+    tables, indexes, views, and triggers &mdash; is held in that single file, whose format is cross-platform, so a
+    database file can be copied between machines of different architectures and used as-is.
+</p>
+<p>
+    SQLite implements most of the SQL language and provides transactions with atomic, consistent, isolated, and
+    durable (ACID) behaviour, including after a crash or power loss part-way through a write. It requires no
+    installation or configuration beyond the application that embeds it. Its source code has been dedicated to the
+    public domain rather than released under a software licence, so it may be used for any purpose without
+    restriction.
+</p>
+
+<h2>History</h2>
+<p>
+    SQLite was created by <strong>D. Richard Hipp</strong> and first released in 2000. It was designed while Hipp was
+    working on a software project for the United States Navy, with the aim of providing a database that a program
+    could use without a separately installed and administered database server. The current major version, SQLite 3,
+    introduced the file format that is still in use, and the project has stated its intention to keep supporting that
+    format, and the library's interface, through the year 2050.
+</p>
+
+<h2>Design</h2>
+<ul>
+    <li><strong>Serverless and self-contained</strong> &mdash; The engine runs inside the calling program, with few
+        dependencies on the operating system or on other libraries.</li>
+    <li><strong>Zero configuration</strong> &mdash; There is no server to start, no user accounts to create, and no
+        settings file to maintain; opening a file is enough to begin using a database.</li>
+    <li><strong>Single-file storage</strong> &mdash; Each database is one file, which makes it practical to use as an
+        application's document or data format.</li>
+    <li><strong>Flexible typing</strong> &mdash; Column types act as a preference, called <em>type affinity</em>,
+        rather than a strict constraint, so a value of a different type may be stored in a column. An optional
+        <code>STRICT</code> table mode, which enforces declared types, was added later.</li>
+    <li><strong>Single-file distribution</strong> &mdash; The library is also distributed as the
+        <em>amalgamation</em>, a single C source file that can be compiled directly into a project.</li>
+</ul>
+<p>
+    The project distributes a command-line program, <code>sqlite3</code>, for creating, querying, and administering
+    database files interactively.
+</p>
+
+<h2>Development and Testing</h2>
+<p>
+    SQLite is maintained by a small core team led by Hipp. The project describes itself as open-source but not
+    open-contribution: its code is freely available, but it does not accept patches from outside the team, a policy
+    connected to keeping the public-domain status of the code clear. Its source history is kept in Fossil, a
+    distributed version control system also written by Hipp, rather than in <a href="/apps/git/">Git</a>.
+</p>
+<p>
+    The project places heavy emphasis on testing. Its test suites are far larger than the library itself, and it
+    reports 100% branch test coverage to the modified condition/decision coverage (MC/DC) standard used for
+    safety-critical aviation software.
+</p>
+
+<h2>Use and Limitations</h2>
+<p>
+    Because it is small and needs no administration, SQLite is embedded in a wide range of software, including the
+    Android and Apple operating systems, major web browsers, and many desktop and mobile applications. A module for
+    it is included in the standard library of the Python programming language. The project describes SQLite as the
+    most widely deployed database engine in use. The United States Library of Congress lists the SQLite database file
+    format among its recommended formats for the preservation of datasets.
+</p>
+<p>
+    SQLite allows many readers but only one writer at a time on a given database; an optional write-ahead log mode
+    lets reading continue while a write is in progress. The project's own guidance describes it as a replacement for
+    application files rather than for client&ndash;server databases, and recommends a client&ndash;server system where
+    many clients write to the same data concurrently over a network.
+</p>
+{{end}}
