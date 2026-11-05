@@ -1,0 +1,235 @@
+---
+updated: "2026-11-05"
+template: tool.html
+title: Roman Numeral Converter
+description: "Convert numbers to Roman numerals and Roman numerals back to numbers, from 1 to 3,999, with a step-by-step breakdown of each symbol."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    function romanConverter() {
+        // Constant tables, kept out of the component's reactive data.
+        var SYMBOLS = [
+            [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"],
+            [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+        ];
+        var LETTERS = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+        // The standard form: at most three of I/X/C/M in a row, each of V/L/D at most once,
+        // and only the six subtractive pairs IV IX XL XC CD CM.
+        var STANDARD = /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
+
+        return {
+            entry: "2026",
+
+            parts: function (n) {
+                var out = [];
+                for (var i = 0; i < SYMBOLS.length; i++) {
+                    while (n >= SYMBOLS[i][0]) {
+                        out.push(SYMBOLS[i]);
+                        n -= SYMBOLS[i][0];
+                    }
+                }
+                return out;
+            },
+            toRoman: function (n) {
+                return this.parts(n).map(function (p) { return p[1]; }).join("");
+            },
+            // The usual left-to-right reading: a letter smaller than the one after it is subtracted.
+            // Used only to suggest the standard spelling of a non-standard numeral.
+            looseValue: function (s) {
+                var total = 0;
+                for (var i = 0; i < s.length; i++) {
+                    var v = LETTERS[s[i]], next = LETTERS[s[i + 1]] || 0;
+                    total += v < next ? -v : v;
+                }
+                return total;
+            },
+
+            calc: function () {
+                var s = String(this.entry || "").trim();
+                if (s === "") return { prompt: "Enter a number such as 1994, or a Roman numeral such as MCMXCIV." };
+
+                var digits = s.replace(/[,\s]/g, "");
+                if (/^[-+]?\d*\.?\d+$/.test(digits)) {
+                    var n = parseFloat(digits);
+                    if (!isFinite(n)) return { error: "That is not a number." };
+                    if (n !== Math.floor(n)) return { error: "Roman numerals have no fractions. Enter a whole number." };
+                    if (n === 0) return { error: "There is no Roman numeral for zero; the system has no symbol for it." };
+                    if (n < 0) return { error: "Roman numerals have no negative numbers. Enter 1 or more." };
+                    if (n > 3999) {
+                        return { error: "Standard Roman numerals stop at 3,999 (MMMCMXCIX). Larger numbers need an "
+                            + "overline notation that plain text cannot show." };
+                    }
+                    return { ok: true, value: n, roman: this.toRoman(n), direction: "toRoman" };
+                }
+
+                var r = s.toUpperCase().replace(/\s/g, "");
+                if (!/^[IVXLCDM]+$/.test(r)) {
+                    return { error: "Use digits for a number, or only the letters I, V, X, L, C, D and M for a numeral." };
+                }
+                if (!STANDARD.test(r)) {
+                    var loose = this.looseValue(r);
+                    if (loose >= 1 && loose <= 3999 && this.toRoman(loose) !== r) {
+                        return { error: r + " is not written in standard form. Read letter by letter it comes to "
+                            + loose.toLocaleString("en-US") + ", which is written " + this.toRoman(loose) + "." };
+                    }
+                    return { error: r + " is not a valid Roman numeral in standard form." };
+                }
+                var value = 0, rest = r;
+                for (var i = 0; i < SYMBOLS.length; i++) {
+                    while (rest.indexOf(SYMBOLS[i][1]) === 0) {
+                        value += SYMBOLS[i][0];
+                        rest = rest.slice(SYMBOLS[i][1].length);
+                    }
+                }
+                return { ok: true, value: value, roman: r, direction: "toNumber" };
+            },
+            ok: function () {
+                return !!this.calc().ok;
+            },
+            message: function () {
+                var r = this.calc();
+                return r.error || r.prompt || "";
+            },
+            label: function () {
+                var r = this.calc();
+                if (!r.ok) return "Result";
+                return r.direction === "toRoman" ? "Roman numeral" : "Number";
+            },
+            answer: function () {
+                var r = this.calc();
+                if (!r.ok) return "—";
+                return r.direction === "toRoman" ? r.roman : r.value.toLocaleString("en-US");
+            },
+            breakdown: function () {
+                var r = this.calc();
+                if (!r.ok) return "";
+                return this.parts(r.value).map(function (p) {
+                    return p[1] + " (" + p[0].toLocaleString("en-US") + ")";
+                }).join(" + ") + " = " + r.value.toLocaleString("en-US");
+            },
+            pair: function () {
+                var r = this.calc();
+                if (!r.ok) return "";
+                return r.value.toLocaleString("en-US") + " = " + r.roman;
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<div x-data="romanConverter()" class="grid-2">
+    <div>
+        <div class="form-group">
+            <label for="romanInput">Number or Roman numeral</label>
+            <input type="text" id="romanInput" x-model="entry" autocomplete="off" spellcheck="false">
+        </div>
+
+        <p class="text-xs text-muted">Type digits to get a Roman numeral, or Roman letters to get a number. Letters can
+            be upper or lower case. The range is 1 to 3,999.</p>
+        <p class="text-xs text-muted">Everything is calculated in your browser &mdash; nothing you type is uploaded
+            anywhere.</p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2" x-text="label()"></p>
+            <div class="form-result" style="color:var(--color-link);overflow-wrap:anywhere" x-text="answer()"></div>
+        </div>
+
+        <div class="card" x-show="ok()">
+            <div class="flex" style="justify-content:space-between">
+                <span class="text-sm text-light">Conversion</span>
+                <strong x-text="pair()"></strong>
+            </div>
+            <p class="text-sm text-light mt-2 mb-2">Symbol by symbol</p>
+            <p class="text-sm" style="margin:0;overflow-wrap:anywhere" x-text="breakdown()"></p>
+        </div>
+
+        <div class="alert alert-info mt-4" x-show="!ok()">
+            <p class="text-sm" x-text="message()"></p>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is a Roman numeral converter?</h2>
+<p>
+    A Roman numeral converter translates between ordinary numbers and the numerals of ancient Rome, which are still used
+    for clock faces, book chapters, monarchs and popes, film copyright years and event editions. This one works in both
+    directions from a single box: type <strong>1994</strong> and it returns <strong>MCMXCIV</strong>; type
+    <strong>MCMXCIV</strong> and it returns 1,994.
+</p>
+
+<h2>How to use this converter</h2>
+<ol>
+    <li>Type a whole number from 1 to 3,999, or a Roman numeral written with the letters I, V, X, L, C, D and M. Case
+        does not matter, and commas or spaces in a number are ignored.</li>
+    <li>The large figure is the conversion. Underneath, the numeral is split into its symbols with the value of each,
+        so the result can be checked by adding them up.</li>
+    <li>The result updates as you type.</li>
+</ol>
+
+<h2>The symbols</h2>
+<ul>
+    <li><strong>I</strong> = 1, <strong>V</strong> = 5, <strong>X</strong> = 10, <strong>L</strong> = 50,
+        <strong>C</strong> = 100, <strong>D</strong> = 500, <strong>M</strong> = 1,000.</li>
+    <li>Symbols are written largest first and added: VIII = 5 + 1 + 1 + 1 = 8.</li>
+    <li>Six <strong>subtractive pairs</strong> place a smaller symbol before a larger one to mean the difference:
+        IV = 4, IX = 9, XL = 40, XC = 90, CD = 400 and CM = 900. Only a power of ten (I, X, C) is ever subtracted, and
+        only from the next two symbols up.</li>
+    <li>I, X, C and M repeat at most three times in a row; V, L and D never repeat.</li>
+</ul>
+
+<h2>The method</h2>
+<p>
+    <strong>Number to numeral</strong> is a greedy walk down a table of thirteen values &mdash; 1000 M, 900 CM, 500 D,
+    400 CD, 100 C, 90 XC, 50 L, 40 XL, 10 X, 9 IX, 5 V, 4 IV, 1 I. At each step the largest value that still fits is
+    written down and subtracted, until nothing is left. Because the subtractive pairs are in the table, the output is
+    always in standard form.
+</p>
+<p>
+    <strong>Numeral to number</strong> first checks the input against the standard pattern &mdash; thousands, then
+    hundreds, then tens, then units, each written with one of the allowed spellings &mdash; and then adds up the values
+    of the symbols and pairs from left to right.
+</p>
+
+<h2>Worked example</h2>
+<ul>
+    <li><strong>1994</strong>: 1,000 fits once (M), leaving 994; 900 fits (CM), leaving 94; 90 fits (XC), leaving 4; 4
+        is IV. So 1994 = M + CM + XC + IV = <strong>MCMXCIV</strong>.</li>
+    <li><strong>MMXXVI</strong>: M + M = 2,000, X + X = 20, V = 5, I = 1, giving <strong>2,026</strong>.</li>
+    <li><strong>3999</strong>, the largest standard numeral, is MMM + CM + XC + IX = <strong>MMMCMXCIX</strong>.</li>
+</ul>
+
+<h2>Assumptions and edge cases</h2>
+<ul>
+    <li><strong>Zero</strong> is refused: Roman numerals have no symbol for it. <strong>Negative numbers</strong> and
+        <strong>fractions</strong> are refused for the same reason.</li>
+    <li><strong>Numbers above 3,999</strong> are refused. Larger values were written by drawing a bar over a numeral to
+        multiply it by 1,000 (the vinculum), which has no single agreed plain-text form.</li>
+    <li><strong>Non-standard numerals</strong> such as IIII, IC or VX are not converted silently. Where a letter-by-letter
+        reading gives a sensible value, the message names it and shows the standard spelling &mdash; IC reads as 99,
+        which is written XCIX. IIII does appear on many clock faces, but it is not the standard form.</li>
+    <li><strong>Any other character</strong> &mdash; a letter outside I V X L C D M, or a mix of digits and letters
+        &mdash; is refused rather than guessed at.</li>
+    <li>The rules here are the modern standard convention. Roman usage itself was less consistent, and older
+        inscriptions contain forms this converter will flag as non-standard.</li>
+</ul>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Roman_numerals" target="_blank" rel="noopener">Roman numerals &mdash;
+            Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Vinculum_(symbol)" target="_blank" rel="noopener">Vinculum (symbol)
+            &mdash; Wikipedia</a></li>
+    <li><a href="https://www.britannica.com/topic/Roman-numeral" target="_blank" rel="noopener">Roman numeral &mdash;
+            Encyclopaedia Britannica</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Greedy_algorithm" target="_blank" rel="noopener">Greedy algorithm
+            &mdash; Wikipedia</a></li>
+</ul>
+{{end}}
