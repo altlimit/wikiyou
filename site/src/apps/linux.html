@@ -1,0 +1,84 @@
+---
+updated: "2026-11-06"
+template: profile.html
+title: Linux
+description: "Linux is a free and open-source Unix-like operating system kernel, first released by Linus Torvalds in 1991 and licensed under the GNU GPL version 2."
+subtitle: Unix-like operating system kernel
+category: apps
+category_label: Apps
+type: Open-Source Software
+industry: Operating Systems
+founded: "1991"
+founders: Linus Torvalds
+website: "https://www.kernel.org"
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    Linux is a free and open-source operating system kernel modelled on Unix. The kernel is the core of an operating
+    system: it manages the processor, memory, and devices, and provides the interface through which other programs
+    use them. Linux is distributed under the terms of the GNU General Public License, version 2, and is written mainly
+    in the C programming language, with some architecture-specific code in assembly language.
+</p>
+<p>
+    The name &ldquo;Linux&rdquo; refers strictly to the kernel, but it is also widely used for the complete operating
+    systems built around it. Those systems, called <em>Linux distributions</em>, combine the kernel with system
+    libraries, utilities, and applications &mdash; many of them from the GNU Project &mdash; along with a package
+    manager for installing software. The Free Software Foundation prefers the name &ldquo;GNU/Linux&rdquo; for such
+    systems, and the choice of name has long been a matter of debate.
+</p>
+
+<h2>History</h2>
+<p>
+    Linux was begun in 1991 by <strong>Linus Torvalds</strong>, then a computer science student at the University of
+    Helsinki in Finland, as a personal project to write a kernel for his own computer. He announced the project on the
+    Usenet newsgroup devoted to MINIX, a small Unix-like teaching operating system, describing it as a hobby, and
+    released the first version later in 1991. Early releases carried a licence that prohibited commercial
+    distribution; in 1992 Torvalds relicensed the kernel under the GNU General Public License, which allowed it to be
+    combined freely with GNU software. Version 1.0 was released in 1994.
+</p>
+<p>
+    The kernel was originally written for the Intel 80386 processor and has since been ported to a large number of
+    processor architectures. In 2005 Torvalds wrote <a href="/apps/git/">Git</a>, a distributed version control
+    system, to manage kernel development after the project lost free use of the proprietary tool it had been using.
+</p>
+
+<h2>Design</h2>
+<ul>
+    <li><strong>Monolithic kernel</strong> &mdash; Core services such as process scheduling, memory management, file
+        systems, and networking run together in kernel space rather than as separate server processes.</li>
+    <li><strong>Loadable modules</strong> &mdash; Device drivers and other features can be built as modules and
+        loaded into or removed from a running kernel as needed.</li>
+    <li><strong>Unix-like interface</strong> &mdash; The system calls the kernel offers follow the Unix model and are
+        largely compatible with the POSIX standard, so much Unix software runs on Linux with little or no change.</li>
+    <li><strong>Portability</strong> &mdash; The same source tree is built for many processor architectures, from
+        small embedded devices to large servers.</li>
+    <li><strong>Rust support</strong> &mdash; Alongside C, the kernel has added support for writing some components,
+        such as drivers, in the Rust programming language.</li>
+</ul>
+
+<h2>Development</h2>
+<p>
+    Linux is developed in public by a large community of individual contributors and companies. Changes are proposed
+    as patches, mainly on mailing lists such as the Linux Kernel Mailing List, and are reviewed by maintainers
+    responsible for particular subsystems before being passed upward. Torvalds remains the final authority over what
+    is merged into the main (&ldquo;mainline&rdquo;) kernel, and his work on it is supported by the Linux Foundation,
+    a non-profit organisation. The project's source code is published at kernel.org.
+</p>
+<p>
+    New mainline versions follow a regular cycle: a short <em>merge window</em> during which new features are
+    accepted, followed by a series of weekly release candidates focused on fixing problems, ending in a stable
+    release. Selected versions are designated as long-term support releases and receive fixes for an extended
+    period. The project's mascot is a penguin named Tux.
+</p>
+
+<h2>Use</h2>
+<p>
+    Linux-based systems are used across nearly every class of computer. Android, the mobile operating system, is built
+    on the Linux kernel, and Linux runs a large share of web servers and cloud infrastructure, as well as many routers,
+    televisions, and other embedded devices. Since 2017 every system on the TOP500 list of the world's most powerful
+    supercomputers has run a Linux-based operating system. Widely used distributions include Debian, Ubuntu, Fedora,
+    and Red Hat Enterprise Linux.
+</p>
+{{end}}
