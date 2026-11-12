@@ -1,0 +1,227 @@
+---
+updated: "2026-11-12"
+template: tool.html
+title: Fraction Calculator
+description: "Add, subtract, multiply or divide two fractions. Get an exact simplified fraction and mixed number, with the calculation and common divisor shown."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    function fractionCalc() {
+        var form = document.getElementById("fraction-form");
+        var result = document.getElementById("fraction-result");
+        var mixed = document.getElementById("fraction-mixed");
+        var steps = document.getElementById("fraction-steps");
+        var status = document.getElementById("fraction-status");
+        var fields = ["numerator-a", "denominator-a", "numerator-b", "denominator-b"];
+        var labels = ["First numerator", "First denominator", "Second numerator", "Second denominator"];
+        function update() {
+            result.textContent = "—";
+            mixed.textContent = "—";
+            steps.textContent = "";
+            status.textContent = "";
+            fields.forEach(function (id) { document.getElementById(id).removeAttribute("aria-invalid"); });
+            if (typeof BigInt !== "function") {
+                status.textContent = "This calculator needs a browser with BigInt support for exact arithmetic.";
+                return;
+            }
+            var values = [];
+            for (var i = 0; i < fields.length; i++) {
+                var input = document.getElementById(fields[i]);
+                var raw = input.value.trim();
+                if (!/^[+-]?\d{1,15}$/.test(raw)) {
+                    input.setAttribute("aria-invalid", "true");
+                    status.textContent = raw === "" ? "Enter all four fraction values." :
+                        labels[i] + " must be a whole number with at most 15 digits (an optional sign is allowed).";
+                    return;
+                }
+                values.push(BigInt(raw));
+                if (i % 2 === 1 && values[i] === BigInt(0)) {
+                    input.setAttribute("aria-invalid", "true");
+                    status.textContent = labels[i] + " cannot be zero.";
+                    return;
+                }
+            }
+            var a = values[0], b = values[1], c = values[2], d = values[3];
+            var op = document.getElementById("fraction-operation").value;
+            var n, denominator, calculation;
+            if (op === "add" || op === "subtract") {
+                n = op === "add" ? a * d + c * b : a * d - c * b;
+                denominator = b * d;
+                calculation = "(" + a + " × " + d + (op === "add" ? " + " : " − ") +
+                    c + " × " + b + ") / (" + b + " × " + d + ")";
+            } else if (op === "multiply") {
+                n = a * c;
+                denominator = b * d;
+                calculation = "(" + a + " × " + c + ") / (" + b + " × " + d + ")";
+            } else if (op === "divide") {
+                if (c === BigInt(0)) {
+                    document.getElementById("numerator-b").setAttribute("aria-invalid", "true");
+                    status.textContent = "Cannot divide by a zero fraction. The second numerator must be nonzero.";
+                    return;
+                }
+                n = a * d;
+                denominator = b * c;
+                calculation = "(" + a + " × " + d + ") / (" + b + " × " + c + ")";
+            } else {
+                status.textContent = "Choose an operation.";
+                return;
+            }
+            var unreduced = n + " / " + denominator;
+            if (denominator < BigInt(0)) { n = -n; denominator = -denominator; }
+            var magnitude = n < BigInt(0) ? -n : n;
+            var gcd = magnitude, remainder = denominator;
+            while (remainder !== BigInt(0)) {
+                var next = gcd % remainder;
+                gcd = remainder;
+                remainder = next;
+            }
+            n /= gcd;
+            denominator /= gcd;
+            result.textContent = denominator === BigInt(1) ? String(n) : n + " / " + denominator;
+            magnitude = n < BigInt(0) ? -n : n;
+            var whole = magnitude / denominator, part = magnitude % denominator;
+            mixed.textContent = whole !== BigInt(0) && part !== BigInt(0) ?
+                (n < BigInt(0) ? "−" : "") + whole + " " + part + " / " + denominator : result.textContent;
+            steps.textContent = calculation + " = " + unreduced +
+                ". Normalize the denominator to positive, then divide numerator and denominator by " + gcd + ".";
+            status.textContent = "Exact result in lowest terms.";
+        }
+        return {
+            init: function () {
+                // Minification omits type="text"; restore it for the existing input[type="text"] styles.
+                fields.forEach(function (id) { document.getElementById(id).setAttribute("type", "text"); });
+                form.addEventListener("submit", function (event) { event.preventDefault(); });
+                form.addEventListener("input", update);
+                form.addEventListener("change", update);
+                document.getElementById("fraction-reset").addEventListener("click", function () {
+                    form.reset();
+                    update();
+                });
+                update();
+            }
+        };
+    }
+    document.addEventListener("DOMContentLoaded", function () { fractionCalc().init(); });
+</script>
+{{end}}
+
+{{define "content"}}
+<form id="fraction-form" class="grid-2" style="margin:0">
+    <div>
+        <h2>Two fractions</h2>
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="numerator-a">First numerator</label>
+                <input id="numerator-a" type="text" inputmode="numeric" value="1" maxlength="16"
+                    aria-describedby="fraction-help">
+            </div>
+            <div class="form-group">
+                <label for="denominator-a">First denominator</label>
+                <input id="denominator-a" type="text" inputmode="numeric" value="2" maxlength="16"
+                    aria-describedby="fraction-help">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="fraction-operation">Operation</label>
+            <select id="fraction-operation">
+                <option value="add">Add (+)</option>
+                <option value="subtract">Subtract (−)</option>
+                <option value="multiply">Multiply (×)</option>
+                <option value="divide">Divide (÷)</option>
+            </select>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="numerator-b">Second numerator</label>
+                <input id="numerator-b" type="text" inputmode="numeric" value="1" maxlength="16"
+                    aria-describedby="fraction-help">
+            </div>
+            <div class="form-group">
+                <label for="denominator-b">Second denominator</label>
+                <input id="denominator-b" type="text" inputmode="numeric" value="3" maxlength="16"
+                    aria-describedby="fraction-help">
+            </div>
+        </div>
+        <p id="fraction-help" class="text-sm text-muted">
+            Whole numbers only, up to 15 digits each. Signs are allowed. Denominators must be nonzero.
+        </p>
+        <button id="fraction-reset" type="button" class="btn btn-secondary btn-sm">Reset example</button>
+        <p class="text-sm text-muted mt-4">
+            Everything is calculated in your browser — nothing you type is uploaded anywhere.
+        </p>
+    </div>
+    <div class="form-result" style="min-width:0;overflow-wrap:anywhere" aria-live="polite" aria-atomic="true">
+        <h2>Simplified result</h2>
+        <p id="fraction-result" class="text-xl font-bold">—</p>
+        <h3>Mixed number</h3>
+        <p id="fraction-mixed" class="text-lg">—</p>
+        <p id="fraction-status">Enter two fractions to calculate.</p>
+        <p id="fraction-steps" class="text-sm"></p>
+    </div>
+</form>
+<noscript><p class="alert alert-info">Enable JavaScript to calculate fractions in this browser.</p></noscript>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is a fraction calculator?</h2>
+<p>
+    A fraction represents a numerator divided by a nonzero denominator. This calculator adds, subtracts, multiplies
+    or divides two fractions and reduces the result to lowest terms. Calculations use exact integer arithmetic,
+    so large intermediate products do not lose digits through decimal rounding.
+</p>
+
+<h2>How to use this calculator</h2>
+<ol>
+    <li>Enter the numerator (top number) and denominator (bottom number) of the first fraction.</li>
+    <li>Select an operation and enter the second fraction. Results update as the inputs change.</li>
+    <li>Read the simplified fraction, its mixed-number equivalent, and the calculation underneath.</li>
+</ol>
+<p>
+    Whole numbers can be entered with a denominator of 1. For a mixed input such as 2 1/3, enter 7 as the numerator
+    and 3 as the denominator. A negative mixed result such as −2 1/3 means −(2 + 1/3), or −7/3.
+    Proper fractions stay as fractions in the mixed-number field, and integer results appear without a denominator.
+</p>
+
+<h2>The formula</h2>
+<p>For fractions a/b and c/d:</p>
+<ul>
+    <li>Add: (a × d + c × b) / (b × d).</li>
+    <li>Subtract: (a × d − c × b) / (b × d).</li>
+    <li>Multiply: (a × c) / (b × d).</li>
+    <li>Divide: (a × d) / (b × c), provided c is nonzero.</li>
+</ul>
+<p>
+    A negative denominator is moved to the numerator by reversing both signs. Dividing numerator and denominator
+    by their greatest common divisor gives lowest terms. The integer quotient and remainder of the absolute
+    numerator divided by the positive denominator give the mixed number; the sign applies to the whole result.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    For 3/4 + 5/6, the numerator is 3 × 6 + 5 × 4 = 38 and the denominator is 4 × 6 = 24.
+    Their greatest common divisor is 2, so 38/24 reduces to <strong>19/12</strong>.
+    Since 19 = 1 × 12 + 7, the mixed number is <strong>1 7/12</strong>.
+</p>
+
+<h2>Zero, signs and input limits</h2>
+<p>
+    Zero is a valid numerator, and a zero result is displayed as 0. A zero denominator is undefined and is rejected.
+    Division by any fraction with a zero numerator is also rejected. Negative numerators and denominators are
+    accepted, including two negative signs in one fraction, which cancel.
+</p>
+<p>
+    Each field accepts up to 15 digits plus an optional leading sign. Empty fields, decimals, exponent notation,
+    commas and other text produce a prompt instead of a result. This limit keeps each calculation small and
+    responsive. Exact results use the browser's built-in BigInt support; no library or remote service is needed.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Fraction" target="_blank" rel="noopener">Fraction — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Greatest_common_divisor" target="_blank" rel="noopener">Greatest common
+        divisor — Wikipedia</a></li>
+</ul>
+{{end}}
