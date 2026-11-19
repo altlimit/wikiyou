@@ -1,0 +1,222 @@
+---
+updated: "2026-11-19"
+template: tool.html
+title: Number Base Converter
+description: "Convert whole numbers between binary, octal, decimal, hexadecimal and any base from 2 to 36, with exact results for long values."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    function baseConverter() {
+        var form = document.getElementById("base-form");
+        var valueInput = document.getElementById("base-value");
+        var fromInput = document.getElementById("base-from");
+        var toInput = document.getElementById("base-to");
+        var status = document.getElementById("base-status");
+        var custom = document.getElementById("base-custom");
+        var customLabel = document.getElementById("base-custom-label");
+        var outputs = { 2: "base-out-2", 8: "base-out-8", 10: "base-out-10", 16: "base-out-16" };
+        var prefixes = { "0b": 2, "0o": 8, "0x": 16 };
+        var digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+        var maxLength = 64;
+        function readBase(input, name) {
+            var raw = input.value.trim();
+            if (!/^\d{1,2}$/.test(raw) || Number(raw) < 2 || Number(raw) > 36) {
+                input.setAttribute("aria-invalid", "true");
+                status.textContent = name + " must be a whole number from 2 to 36.";
+                return 0;
+            }
+            return Number(raw);
+        }
+        function clear() {
+            Object.keys(outputs).forEach(function (b) { document.getElementById(outputs[b]).textContent = "—"; });
+            custom.textContent = "—";
+            customLabel.textContent = "Target base";
+            [valueInput, fromInput, toInput].forEach(function (el) { el.removeAttribute("aria-invalid"); });
+        }
+        function update() {
+            clear();
+            status.textContent = "";
+            if (typeof BigInt !== "function") {
+                status.textContent = "This converter needs a browser with BigInt support for exact results.";
+                return;
+            }
+            var from = readBase(fromInput, "Input base");
+            if (!from) return;
+            var to = readBase(toInput, "Target base");
+            if (!to) return;
+            var raw = valueInput.value.trim().toLowerCase();
+            if (raw === "") {
+                status.textContent = "Enter a number to convert.";
+                return;
+            }
+            var negative = false;
+            if (raw[0] === "-" || raw[0] === "+") {
+                negative = raw[0] === "-";
+                raw = raw.slice(1);
+            }
+            var prefix = raw.slice(0, 2);
+            if (prefixes[prefix] === from && raw.length > 2) raw = raw.slice(2);
+            if (raw === "") {
+                valueInput.setAttribute("aria-invalid", "true");
+                status.textContent = "Enter at least one digit after the sign or prefix.";
+                return;
+            }
+            if (raw.length > maxLength) {
+                valueInput.setAttribute("aria-invalid", "true");
+                status.textContent = "Enter at most " + maxLength + " digits.";
+                return;
+            }
+            var big = BigInt(from), value = BigInt(0);
+            for (var i = 0; i < raw.length; i++) {
+                var d = digits.indexOf(raw[i]);
+                if (d < 0 || d >= from) {
+                    valueInput.setAttribute("aria-invalid", "true");
+                    if (raw[i] === "." || raw[i] === ",") {
+                        status.textContent = "Only whole numbers are supported; remove the \"" + raw[i] + "\".";
+                    } else if (d < 0) {
+                        status.textContent = "\"" + raw[i] + "\" is not a digit in any base from 2 to 36.";
+                    } else {
+                        status.textContent = "\"" + raw[i].toUpperCase() + "\" is not a valid digit in base " + from +
+                            ". Base " + from + " uses " + (from <= 10 ? "0–" + (from - 1) :
+                            "0–9 and A–" + digits[from - 1].toUpperCase()) + ".";
+                    }
+                    return;
+                }
+                value = value * big + BigInt(d);
+            }
+            if (value === BigInt(0)) negative = false;
+            function show(base) { return (negative ? "-" : "") + value.toString(base).toUpperCase(); }
+            Object.keys(outputs).forEach(function (b) { document.getElementById(outputs[b]).textContent = show(Number(b)); });
+            customLabel.textContent = "Base " + to;
+            custom.textContent = show(to);
+            status.textContent = "Exact conversion of a " + value.toString(2).length + "-bit magnitude" +
+                (negative ? ", shown with a minus sign (not two's complement)." : ".");
+        }
+        return {
+            init: function () {
+                // Minification omits type="text"; restore it for the existing input[type="text"] styles.
+                [valueInput, fromInput, toInput].forEach(function (el) { el.setAttribute("type", "text"); });
+                form.addEventListener("submit", function (event) { event.preventDefault(); });
+                form.addEventListener("input", update);
+                form.addEventListener("change", update);
+                document.getElementById("base-reset").addEventListener("click", function () {
+                    form.reset();
+                    update();
+                });
+                update();
+            }
+        };
+    }
+    document.addEventListener("DOMContentLoaded", function () { baseConverter().init(); });
+</script>
+{{end}}
+
+{{define "content"}}
+<form id="base-form" class="grid-2" style="margin:0">
+    <div>
+        <h2>Number to convert</h2>
+        <div class="form-group">
+            <label for="base-value">Number</label>
+            <input id="base-value" type="text" value="255" maxlength="70" autocomplete="off" spellcheck="false"
+                aria-describedby="base-help">
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="base-from">Input base (2–36)</label>
+                <input id="base-from" type="text" inputmode="numeric" value="10" maxlength="2">
+            </div>
+            <div class="form-group">
+                <label for="base-to">Target base (2–36)</label>
+                <input id="base-to" type="text" inputmode="numeric" value="36" maxlength="2">
+            </div>
+        </div>
+        <p id="base-help" class="text-sm text-muted">
+            Whole numbers up to 64 digits. Letters A–Z stand for digit values 10–35 and are not case-sensitive.
+            An optional sign is allowed, and a 0b, 0o or 0x prefix is accepted when it matches the input base.
+        </p>
+        <button id="base-reset" type="button" class="btn btn-secondary btn-sm">Reset example</button>
+        <p class="text-sm text-muted mt-4">
+            Everything is calculated in your browser — nothing you type is uploaded anywhere.
+        </p>
+    </div>
+    <div class="form-result" style="min-width:0;overflow-wrap:anywhere" aria-live="polite" aria-atomic="true">
+        <h2>Result</h2>
+        <h3 id="base-custom-label">Target base</h3>
+        <p id="base-custom" class="text-xl font-bold">—</p>
+        <h3>Binary (base 2)</h3>
+        <p id="base-out-2" class="text-lg">—</p>
+        <h3>Octal (base 8)</h3>
+        <p id="base-out-8" class="text-lg">—</p>
+        <h3>Decimal (base 10)</h3>
+        <p id="base-out-10" class="text-lg">—</p>
+        <h3>Hexadecimal (base 16)</h3>
+        <p id="base-out-16" class="text-lg">—</p>
+        <p id="base-status">Enter a number to convert.</p>
+    </div>
+</form>
+<noscript><p class="alert alert-info">Enable JavaScript to convert numbers in this browser.</p></noscript>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is a number base converter?</h2>
+<p>
+    A positional numeral system writes a number as a sequence of digits, each multiplied by a power of the base
+    (or radix). Decimal uses base 10, binary base 2, octal base 8 and hexadecimal base 16. This converter reads a
+    whole number written in any base from 2 to 36 and writes the same value in binary, octal, decimal, hexadecimal
+    and a chosen target base. Values are held as exact integers, so long inputs are converted without rounding.
+</p>
+
+<h2>How to use this converter</h2>
+<ol>
+    <li>Type the number, then enter the base it is written in. Hexadecimal input such as FF needs input base 16.</li>
+    <li>Enter a target base for the highlighted result. The four common bases are always shown underneath.</li>
+    <li>Results update as you type. A message explains any digit that does not belong to the input base.</li>
+</ol>
+<p>
+    Digits above 9 are written with letters: A is 10, B is 11 and so on up to Z for 35, which is why 36 is the
+    largest base supported. Output letters are shown in upper case. The status line also reports how many bits the
+    value needs in binary.
+</p>
+
+<h2>The formula</h2>
+<p>
+    For digits d<sub>n−1</sub> … d<sub>1</sub> d<sub>0</sub> in base b, the value is
+    d<sub>n−1</sub> × b<sup>n−1</sup> + … + d<sub>1</sub> × b + d<sub>0</sub>. The converter evaluates this from
+    left to right as value = value × b + digit (Horner's method). To write the value in a target base, it is
+    divided repeatedly by that base; the remainders, read from last to first, are the new digits.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    Decimal 255 divided by 16 is 15 remainder 15, and 15 divided by 16 is 0 remainder 15. Both remainders are the
+    digit F, so 255 is <strong>FF</strong> in hexadecimal. In binary, 255 = 2<sup>8</sup> − 1, which is
+    <strong>11111111</strong>, and in octal it is 3 × 64 + 7 × 8 + 7 = <strong>377</strong>. In base 36 it is
+    7 × 36 + 3 = <strong>73</strong>.
+</p>
+
+<h2>Signs, fractions and input limits</h2>
+<p>
+    Negative numbers are converted as a minus sign followed by the magnitude, for example −10 is −1010 in binary.
+    This is not the two's complement form a computer uses for fixed-width signed integers, which depends on the
+    word size. Zero converts to 0 in every base, and −0 is shown as 0.
+</p>
+<p>
+    Only whole numbers are supported: a decimal point, comma, space or any character outside the input base's
+    digits produces a message instead of a result. Leading zeros are allowed and ignored. A 0b, 0o or 0x prefix is
+    removed only when it matches the input base, because in base 36, for instance, B and X are ordinary digits.
+    Inputs are limited to 64 digits and bases to the range 2–36. Exact arithmetic uses the browser's built-in
+    BigInt support; no library or remote service is needed.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Radix" target="_blank" rel="noopener">Radix — Wikipedia</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Positional_notation" target="_blank" rel="noopener">Positional
+        notation — Wikipedia</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt/toString"
+        target="_blank" rel="noopener">BigInt.prototype.toString() — MDN</a></li>
+</ul>
+{{end}}
