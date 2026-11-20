@@ -1,0 +1,77 @@
+---
+updated: "2026-11-20"
+template: profile.html
+title: Firefox
+description: "Mozilla Firefox is a free and open-source web browser developed by Mozilla, first released as version 1.0 in 2004 and built on the Gecko engine."
+subtitle: Free and open-source web browser
+category: apps
+category_label: Apps
+type: Open-Source Software
+industry: Web Browsers
+founded: "2002"
+website: "https://www.mozilla.org/firefox/"
+og_type: article
+---
+{{define "content"}}
+<h2>Overview</h2>
+<p>
+    Mozilla Firefox, usually called simply Firefox, is a free and open-source web browser developed by the Mozilla
+    Foundation and its subsidiary, the Mozilla Corporation. It is available for Windows, macOS and Linux on the
+    desktop, and for Android and iOS on mobile devices. Its source code is published under the Mozilla Public License.
+</p>
+<p>
+    Firefox renders web pages with <strong>Gecko</strong>, a browser engine developed by Mozilla. This makes it one of
+    the few major browsers not built on Chromium&rsquo;s Blink engine or Apple&rsquo;s WebKit, and it is often cited
+    for that reason as a source of independence in how web standards are implemented.
+</p>
+
+<h2>History</h2>
+<p>
+    Firefox descends from Netscape Navigator. In 1998 Netscape released the source code of its browser and founded
+    the Mozilla project to develop it in the open; that work produced the Mozilla Application Suite, which combined a
+    browser with an email client, an HTML editor and other components.
+</p>
+<p>
+    Firefox began in 2002 as an experimental branch of that project, started by Mozilla developers including
+    <strong>Dave Hyatt</strong> and <strong>Blake Ross</strong>, with the aim of producing a smaller, faster,
+    standalone browser. It was first released under the name <em>Phoenix</em>, renamed <em>Firebird</em> after a
+    trademark conflict, and renamed again to <em>Firefox</em> in 2004 because the Firebird name was already used by
+    an open-source database project. Firefox 1.0 was released in November 2004.
+</p>
+<p>
+    The Mozilla Foundation, a non-profit organization, was established in 2003 to oversee the Mozilla project. In 2005
+    it created the Mozilla Corporation, a wholly owned taxable subsidiary, to handle the development and distribution
+    of Firefox.
+</p>
+
+<h2>Development</h2>
+<p>
+    In 2011 Firefox moved from infrequent major releases to a rapid release cycle, publishing a new numbered version
+    every few weeks. Alongside the main release, Mozilla offers beta and nightly builds for testing, and an
+    <strong>Extended Support Release</strong> (ESR) channel that receives security fixes over a longer period, intended
+    for organizations that cannot update frequently.
+</p>
+<p>
+    In 2017 Firefox 57, branded <em>Firefox Quantum</em>, introduced a substantial reworking of the browser&rsquo;s
+    engine. It incorporated components written in <strong>Rust</strong>, a programming language that originated at
+    Mozilla, including a parallel CSS style engine developed in Mozilla&rsquo;s experimental Servo browser engine
+    project. The same release dropped support for Firefox&rsquo;s older extension system.
+</p>
+<p>
+    On iOS, Firefox uses Apple&rsquo;s WebKit engine rather than Gecko, because Apple&rsquo;s platform rules have
+    required third-party browsers to do so.
+</p>
+
+<h2>Features</h2>
+<ul>
+    <li><strong>Extensions</strong> &mdash; Since Firefox 57, add-ons are built on the WebExtensions API, which is
+        largely compatible with the extension model used by Chromium-based browsers. Mozilla distributes them through
+        its add-ons site.</li>
+    <li><strong>Privacy protections</strong> &mdash; Firefox includes private browsing and Enhanced Tracking
+        Protection, which blocks many known third-party trackers by default.</li>
+    <li><strong>Sync</strong> &mdash; With a Mozilla account, bookmarks, history, passwords and open tabs can be
+        synchronized between devices.</li>
+    <li><strong>Developer tools</strong> &mdash; Firefox ships with built-in tools for inspecting and debugging web
+        pages, including an element inspector, a JavaScript console and debugger, and a network monitor.</li>
+</ul>
+{{end}}
