@@ -43,10 +43,10 @@ site/
 
 ### Prerequisites
 
-Install [SiteGen](https://github.com/altlimit/sitegen):
+Set up [alt](https://github.com/altlimit/alt), then use it to install [SiteGen](https://github.com/altlimit/sitegen).
 
 ```bash
-go install github.com/altlimit/sitegen@latest
+alt install altlimit/sitegen
 ```
 
 ### Development
