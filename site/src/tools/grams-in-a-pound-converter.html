@@ -1,0 +1,140 @@
+---
+updated: "2026-08-01"
+template: tool.html
+title: Grams in a Pound Converter
+description: "Convert pounds to grams using the exact 453.59237 grams per pound formula. Includes common reference values and a worked example."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    (function (d) {
+        var s = d.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.4/dist/alpine.min.js";
+        s.defer = true;
+        d.head.appendChild(s);
+    })(document);
+</script>
+<script>
+    function gramsInPoundCalc() {
+        return {
+            pounds: 1,
+            gramsPerPound: 453.59237,
+            presets: [0.25, 0.5, 1, 2, 5, 10],
+            num: function (v) {
+                var n = Number(v);
+                return isFinite(n) ? n : 0;
+            },
+            grams: function () {
+                return this.num(this.pounds) * this.gramsPerPound;
+            },
+            fmt: function (n) {
+                if (!isFinite(n)) return "-";
+                var rounded = Math.round(n * 100000) / 100000;
+                var parts = String(rounded).split(".");
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return parts.join(".");
+            },
+            setPounds: function (v) {
+                this.pounds = v;
+            }
+        }
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<form x-data="gramsInPoundCalc()" class="grid-2" style="margin:0" onsubmit="return false">
+    <div>
+        <div class="form-group">
+            <label for="pounds">Pounds (lb)</label>
+            <input type="text" inputmode="decimal" id="pounds" x-model="pounds" placeholder="1">
+        </div>
+
+        <div class="flex mt-2" style="gap:0.5rem;flex-wrap:wrap">
+            <template x-for="preset in presets" :key="preset">
+                <button type="button" class="text-sm" style="cursor:pointer" @click="setPounds(preset)"
+                    x-text="preset + ' lb'"></button>
+            </template>
+        </div>
+
+        <p class="text-xs text-muted mt-4">
+            The calculator uses the exact international avoirdupois pound conversion: 1 lb = 453.59237 g.
+        </p>
+    </div>
+
+    <div class="flex flex-col" style="justify-content:center">
+        <div class="text-center mb-4">
+            <p class="text-sm text-light mb-2">Grams</p>
+            <div class="form-result" x-text="fmt(grams()) + ' g'"></div>
+            <p class="text-sm text-light mt-4">
+                <span x-text="fmt(num(pounds))"></span> lb x 453.59237 = <span x-text="fmt(grams())"></span> g
+            </p>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What this converter does</h2>
+<p>
+    This tool converts pounds to grams using the exact relationship between the international avoirdupois pound and the
+    gram. It is useful for cooking, shipping weights, nutrition labels, classroom unit conversion, and quick everyday
+    calculations where a pound value needs to be expressed in grams.
+</p>
+
+<h2>The formula</h2>
+<p>
+    The exact formula is:
+</p>
+<p><strong>grams = pounds &times; 453.59237</strong></p>
+<p>
+    For everyday use, many people round one pound to 454 grams. The exact value is better when you are scaling a recipe,
+    checking nutrition values, or comparing measurements that should be repeatable.
+</p>
+
+<h2>Common conversions</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Pounds</th>
+            <th>Grams</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>0.25 lb</td>
+            <td>113.39809 g</td>
+        </tr>
+        <tr>
+            <td>0.5 lb</td>
+            <td>226.79619 g</td>
+        </tr>
+        <tr>
+            <td>1 lb</td>
+            <td>453.59237 g</td>
+        </tr>
+        <tr>
+            <td>2 lb</td>
+            <td>907.18474 g</td>
+        </tr>
+        <tr>
+            <td>5 lb</td>
+            <td>2,267.96185 g</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Worked example</h2>
+<p>
+    To convert 3 pounds to grams, multiply 3 by 453.59237. The result is
+    <strong>1,360.77711 grams</strong>. Rounded for kitchen use, that is about <strong>1,361 grams</strong>.
+</p>
+
+<h3>Related resource</h3>
+<ul>
+    <li><a href="https://gramsinpound.com/" target="_blank" rel="noopener">Grams in a Pound</a> - dedicated
+        pounds-to-grams converter with a quick chart, examples, and FAQs.</li>
+</ul>
+{{end}}
