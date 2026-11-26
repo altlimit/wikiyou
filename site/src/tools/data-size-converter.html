@@ -1,0 +1,147 @@
+---
+updated: "2026-11-26"
+template: tool.html
+title: Data Size Converter
+description: "Convert bits, bytes, KB, MB, GB and TB, as well as KiB, MiB, GiB and TiB. Compare decimal and binary units with exact results."
+category: tools
+category_label: Tools
+og_type: article
+---
+{{define "addHead"}}
+<script>
+    function dataSizeConverter() {
+        const form = document.getElementById("size-form");
+        const amount = document.getElementById("size-amount");
+        const from = document.getElementById("size-from");
+        const to = document.getElementById("size-to");
+        const result = document.getElementById("size-result");
+        const status = document.getElementById("size-status");
+        const units = {
+            bit: 1n, B: 8n, kB: 8n * 1000n, MB: 8n * 1000n ** 2n,
+            GB: 8n * 1000n ** 3n, TB: 8n * 1000n ** 4n, KiB: 8n * 1024n,
+            MiB: 8n * 1024n ** 2n, GiB: 8n * 1024n ** 3n, TiB: 8n * 1024n ** 4n
+        };
+        Object.keys(units).forEach(function (unit) {
+            from.add(new Option(unit, unit));
+            to.add(new Option(unit, unit));
+        });
+
+        from.value = "GB";
+        to.value = "GiB";
+
+        function decimal(numerator, denominator) {
+            const whole = (numerator / denominator).toString();
+            let remainder = numerator % denominator;
+            if (remainder === 0n) return whole;
+
+            // Every denominator has only factors of 2 and 5, so the decimal terminates.
+            let fraction = "";
+            while (remainder > 0n) {
+                remainder *= 10n;
+                fraction += (remainder / denominator).toString();
+                remainder %= denominator;
+            }
+            return whole + "." + fraction;
+        }
+
+        function update() {
+            const raw = amount.value.trim();
+            amount.removeAttribute("aria-invalid");
+            result.textContent = "—";
+            status.textContent = "";
+            if (raw === "") {
+                status.textContent = "Enter an amount to convert.";
+                return;
+            }
+            if (!/^(?:\d{1,18}(?:\.\d{0,12})?|\.\d{1,12})$/.test(raw)) {
+                amount.setAttribute("aria-invalid", "true");
+                status.textContent = "Enter a nonnegative decimal with up to 18 whole digits and 12 decimal places.";
+                return;
+            }
+            const [whole, fraction = ""] = raw.split(".");
+            const numerator = BigInt(whole + fraction) * units[from.value];
+            const denominator = 10n ** BigInt(fraction.length) * units[to.value];
+            result.textContent = decimal(numerator, denominator) + " " + to.value;
+        }
+
+        // The minifier removes the default type attribute used by existing input styles.
+        amount.setAttribute("type", "text");
+        form.addEventListener("submit", function (event) { event.preventDefault(); });
+        amount.addEventListener("input", update);
+        from.addEventListener("change", update);
+        to.addEventListener("change", update);
+        update();
+    }
+    document.addEventListener("DOMContentLoaded", dataSizeConverter);
+</script>
+{{end}}
+
+{{define "content"}}
+<form id="size-form" class="grid-2" style="margin:0">
+    <div>
+        <h2>Data size</h2>
+        <div class="form-group">
+            <label for="size-amount">Amount</label>
+            <input id="size-amount" type="text" inputmode="decimal" value="1" autocomplete="off"
+                aria-describedby="size-help">
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="size-from">From unit</label>
+                <select id="size-from"></select>
+            </div>
+            <div class="form-group">
+                <label for="size-to">To unit</label>
+                <select id="size-to"></select>
+            </div>
+        </div>
+        <p id="size-help" class="text-sm text-muted">Use a decimal point and omit thousands separators.</p>
+        <p class="text-sm text-muted">Everything is calculated in your browser — nothing you type is uploaded anywhere.</p>
+    </div>
+    <div class="form-result" style="min-width:0;overflow-wrap:anywhere" aria-live="polite" aria-atomic="true">
+        <h2>Result</h2>
+        <p id="size-result" class="text-xl font-bold">—</p>
+        <p id="size-status"></p>
+    </div>
+</form>
+<noscript><p class="alert alert-info">Enable JavaScript to convert data sizes in this browser.</p></noscript>
+{{end}}
+
+{{define "tool-info"}}
+<h2>What is a data size converter?</h2>
+<p>
+    A data size converter expresses the same quantity in different units of digital information. One byte (B)
+    contains eight bits. Decimal units such as kilobytes (kB, often written KB) and megabytes (MB) use powers
+    of 1,000. Binary units such as kibibytes (KiB) and mebibytes (MiB) use powers of 1,024.
+</p>
+
+<h2>How to use this converter</h2>
+<p>
+    Enter a quantity and select its current unit and the unit to convert to. The result updates immediately
+    and displays the exact decimal value in the selected destination unit.
+</p>
+
+<h2>The formula</h2>
+<p>
+    Multiply the amount by the number of bits in its source unit, then divide by the number of bits in the
+    destination unit. A gigabyte is 1,000³ bytes and a gibibyte is 1,024³ bytes.
+</p>
+
+<h2>Worked example</h2>
+<p>
+    To convert 1.5 MiB to KiB, multiply 1.5 by 1,024² bytes per MiB and divide by 1,024 bytes per KiB.
+    The result is 1,536 KiB.
+</p>
+
+<h3>Input limits</h3>
+<p>
+    Zero converts to zero. The calculator accepts up to 18 digits before the decimal point and 12 after it.
+    Negative amounts, exponent notation and thousands separators are invalid. Fractional results describe
+    quantities in the selected unit, including quantities smaller than one byte.
+</p>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://en.wikipedia.org/wiki/Binary_prefix">Binary prefixes and their decimal counterparts</a></li>
+</ul>
+{{end}}
